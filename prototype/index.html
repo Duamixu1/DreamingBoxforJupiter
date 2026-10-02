@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jupiter Music Box</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg-1: #3a2a20; --bg-2: #120d0a;
+    --walnut: #5b3a26; --walnut-dark: #2a1b12; --brass: #c9a25a; --brass-dark: #7a5a2c;
+    --ink: #e9dcc8; --ink-dim: #a8957c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    min-height: 100vh; display: grid; place-items: center; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 30%, var(--bg-1), var(--bg-2) 70%);
+    color: var(--ink); font: 14px/1.5 -apple-system, "PingFang SC", system-ui, sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+
+  /* 尺寸全部由 config.js 的 HARDWARE（mm）换算成百分比，见页尾脚本 */
+  .stage-wrap { position: relative; width: min(64vw, calc((100vh - 150px) * var(--case-aspect, .59) / 1.1), 520px); padding-top: 9%; }
+  .box { position: relative; perspective: 1600px; }
+
+  .case {
+    position: relative; border-radius: 12px; aspect-ratio: var(--case-aspect, .59);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.28)),
+      repeating-linear-gradient(91deg, rgba(0,0,0,.07) 0 2px, transparent 2px 9px),
+      repeating-linear-gradient(88deg, rgba(255,220,180,.045) 0 1px, transparent 1px 14px),
+      var(--walnut);
+    box-shadow: 0 34px 70px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,255,255,.12), inset 0 -8px 14px rgba(0,0,0,.35);
+  }
+  /* Jupiter 显示组件自带的正面木框（与屏幕是一个整体，不可拆） */
+  .module {
+    position: absolute; border-radius: 4px;
+    background: linear-gradient(180deg, #d9b98c, #c49d6c);
+    box-shadow: 0 0 0 2px var(--walnut-dark), 0 0 0 4px var(--brass-dark), inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .window { position: absolute; overflow: hidden; background: #000; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+  .window::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), inset 0 14px 26px rgba(0,0,0,.55), inset 0 -4px 14px rgba(0,0,0,.35), inset 10px 0 18px rgba(0,0,0,.3), inset -10px 0 18px rgba(0,0,0,.3);
+  }
+  #screen { position: absolute; inset: 0; }
+  #screen canvas { display: block; }
+  .dim { position: absolute; inset: 0; background: #000; opacity: .95; pointer-events: none; transition: opacity .5s ease; }
+  body.open .dim { opacity: 0; transition: opacity 1.3s ease .35s; }
+
+  .nameplate {
+    position: absolute; left: 50%; bottom: var(--plate-bottom, 4%); transform: translate(-50%, 50%);
+    padding: .35em 1.6em; border-radius: 3px; white-space: nowrap;
+    font: 600 clamp(9px, 1vw, 12px)/1.4 Georgia, "Songti SC", serif; letter-spacing: .28em; color: #3b2a15;
+    background: linear-gradient(180deg, #e8cd8c, var(--brass) 55%, #a8823f);
+    box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 2px 4px rgba(0,0,0,.45);
+  }
+
+  /* 上盖：绕顶边翻开，只是幕布，不承载屏幕 */
+  .lid {
+    position: absolute; left: 0; right: 0; top: 0; height: 100%; cursor: pointer;
+    transform-origin: 50% 0; transform-style: preserve-3d;
+    transition: transform 1s cubic-bezier(.3,.1,.2,1);
+  }
+  body.open .lid { transform: rotateX(104deg); }
+  .lid-face {
+    position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden;
+    display: grid; place-items: center;
+  }
+  .lid-outer {
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(255,230,190,.08), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 2px, transparent 2px 10px),
+      repeating-linear-gradient(87deg, rgba(255,220,180,.05) 0 1px, transparent 1px 15px),
+      #63402a;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.14), inset 0 -10px 18px rgba(0,0,0,.35), 0 10px 24px rgba(0,0,0,.4);
+  }
+  .lid-outer .emblem { text-align: center; color: rgba(233,205,150,.75); }
+  .lid-outer .emblem b { display: block; font: 600 clamp(14px, 2.2vw, 26px) Georgia, serif; letter-spacing: .3em; }
+  .lid-outer .emblem span { display: block; margin-top: .6em; font-size: clamp(10px, 1vw, 13px); letter-spacing: .4em; color: rgba(233,205,150,.5); }
+  .lid-outer::before {
+    content: ""; position: absolute; inset: 5%; border-radius: 10px; border: 1px solid rgba(201,162,90,.35);
+  }
+  .lid-inner {
+    transform: rotateX(180deg);
+    background: linear-gradient(180deg, #4a2530, #2e161d); border: 10px solid #5e3c27;
+    box-shadow: inset 0 0 30px rgba(0,0,0,.6);
+  }
+
+  /* 右侧摇柄 */
+  .axle {
+    position: absolute; right: -9%; top: calc(62% - 6px); width: 10%; height: 12px; border-radius: 6px;
+    background: linear-gradient(180deg, #d9d6d0, #8a8781 60%, #5d5a55);
+    box-shadow: 0 3px 6px rgba(0,0,0,.4);
+  }
+  #crank {
+    position: absolute; right: -36%; top: 62%; width: 32%; aspect-ratio: 1; transform: translateY(-50%);
+    cursor: grab; touch-action: none;
+  }
+  #crank.grabbing { cursor: grabbing; }
+  #crank .track { opacity: 0; transition: opacity .3s; }
+  #crank:hover .track, #crank.grabbing .track { opacity: 1; }
+
+  .dims { margin-top: 14px; text-align: center; color: rgba(168,149,124,.7); font: 11px ui-monospace, Menlo, monospace; letter-spacing: .04em; }
+  .hint {
+    margin-top: 6px; text-align: center; color: var(--ink-dim); font-size: 13px; letter-spacing: .08em;
+    transition: opacity .8s;
+  }
+  .hint kbd { font: 12px ui-monospace, Menlo, monospace; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(233,220,200,.25); }
+  .hint .step-open { display: inline; }
+  .hint .step-crank { display: none; }
+  body.open .hint .step-open { display: none; }
+  body.open .hint .step-crank { display: inline; }
+  body.cranked .hint { opacity: 0; }
+
+  /* 调试面板 */
+  .debug {
+    position: fixed; left: 12px; bottom: 12px; width: 360px; max-height: calc(100vh - 24px); overflow: auto;
+    padding: 14px; border-radius: 10px; background: rgba(18,14,12,.94); border: 1px solid rgba(233,220,200,.15);
+    display: none; z-index: 10; -webkit-user-select: text; user-select: text;
+  }
+  body.debug .debug { display: block; }
+  .debug h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .1em; color: var(--brass); }
+  .debug pre { margin: 0 0 10px; font: 12px/1.6 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
+  .debug .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .debug button {
+    font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 6px; cursor: pointer;
+    color: var(--ink); background: #3a2c22; border: 1px solid rgba(233,220,200,.2);
+  }
+  .debug button:hover { background: #4a382b; }
+  .debug .note { color: var(--ink-dim); font-size: 12px; margin: 0 0 10px; }
+
+  /* 相框模式：屏幕本身就装在实体木盒里，页面只留舞台 */
+  body.device { display: block; cursor: none; background: #000; touch-action: none; }
+  body.device .stage-wrap { width: 100vw; height: 100vh; padding: 0; margin: 0; } /* 盖掉下方媒体查询的 margin-right，画布必须贴齐屏幕左上角，否则交织相位错位 */
+  body.device .box, body.device .case { height: 100%; }
+  body.device .case { padding: 0; border-radius: 0; background: #000; box-shadow: none; }
+  body.device .case { aspect-ratio: auto; }
+  body.device .module, body.device .window { inset: 0 !important; width: auto !important; height: auto !important; border-radius: 0; box-shadow: none; background: #000; }
+  body.device .window::after, body.device .lid, body.device .nameplate, body.device .axle,
+  body.device #crank, body.device .hint, body.device .dims { display: none; }
+  body.device.debug { cursor: auto; }
+
+  @media (max-width: 720px) {
+    .stage-wrap { width: min(62vw, calc((100vh - 170px) * var(--case-aspect, .59) / 1.1)); margin-right: 22vw; }
+    .debug { width: calc(100vw - 24px); }
+    .debug { width: calc(100vw - 24px); }
+  }
+</style>
+</head>
+<body>
+  <div class="stage-wrap">
+    <div class="box">
+      <div class="case">
+        <div class="module" id="module">
+          <div class="window" id="window">
+            <div id="screen"></div>
+            <div class="dim"></div>
+          </div>
+        </div>
+        <div class="nameplate" id="nameplate">FOR YOU</div>
+        <div class="lid" id="lid" title="打开 / 合上">
+          <div class="lid-face lid-outer"><div class="emblem"><b>MUSIC BOX</b><span>轻触打开</span></div></div>
+          <div class="lid-face lid-inner"></div>
+        </div>
+      </div>
+      <div class="axle"></div>
+      <svg id="crank" viewBox="-80 -80 160 160" aria-label="摇柄">
+        <defs>
+          <radialGradient id="g-brass" cx="35%" cy="30%"><stop offset="0" stop-color="#f3dd9e"/><stop offset=".55" stop-color="#c9a25a"/><stop offset="1" stop-color="#7a5a2c"/></radialGradient>
+          <linearGradient id="g-steel" x1="0" x2="1"><stop offset="0" stop-color="#6b6862"/><stop offset=".45" stop-color="#e4e1da"/><stop offset="1" stop-color="#7d7a74"/></linearGradient>
+          <radialGradient id="g-wood" cx="35%" cy="30%"><stop offset="0" stop-color="#a7714a"/><stop offset=".6" stop-color="#6e4329"/><stop offset="1" stop-color="#3d2416"/></radialGradient>
+        </defs>
+        <circle class="track" r="56" fill="none" stroke="rgba(233,220,200,.28)" stroke-width="2" stroke-dasharray="3 7"/>
+        <circle r="24" fill="url(#g-brass)" stroke="#5e4320" stroke-width="1.5"/>
+        <g id="crank-arm">
+          <rect x="-6" y="-60" width="12" height="62" rx="6" fill="url(#g-steel)" stroke="#4a4844" stroke-width="1"/>
+          <circle cy="-56" r="17" fill="url(#g-wood)" stroke="#2a180e" stroke-width="1.5"/>
+          <circle cx="-5" cy="-61" r="5" fill="rgba(255,230,200,.25)"/>
+        </g>
+        <circle r="9" fill="url(#g-brass)" stroke="#5e4320" stroke-width="1"/>
+      </svg>
+    </div>
+    <p class="dims" id="dims"></p>
+    <p class="hint">
+      <span class="step-open">轻触盖子打开 · 或按 <kbd>L</kbd></span>
+      <span class="step-crank">顺时针拖动右侧摇柄 · 或按住 <kbd>空格</kbd> · 停手世界就停下</span>
+    </p>
+  </div>
+
+  <aside class="debug">
+    <h3>调试 · 隐藏入口（D 键）</h3>
+    <pre id="stats"></pre>
+    <div class="row">
+      <button id="btn-mode">2D / 交织</button>
+      <button id="btn-lid">开 / 合盖</button>
+      <button id="btn-reset">演示重置</button>
+      <button id="btn-full">全屏</button>
+      <button id="btn-save">保存参数到本机</button>
+      <button id="btn-shot">截图</button>
+    </div>
+    <p class="note">实体摇柄 HID 键位：<span id="hid-keys"></span>。Shift+R 也可重置。</p>
+    <h3>Jupiter 校准</h3>
+    <p class="note">Pitch / Offset 用本机背标签的值，Tan 固定 10。普通屏幕上看交织画面有条纹是正常的。</p>
+    <div id="calib"></div>
+  </aside>
+
+  <script type="module">
+    // 按真实硬件尺寸（mm）摆放：外壳 → Jupiter 显示组件（含自带木框）→ 可视屏幕
+    import { STORY, HARDWARE } from './src/config.js';
+    const { module: m, panel: p, shell } = HARDWARE;
+    const W = m.w + shell.wall * 2, H = m.h + shell.top + shell.base;
+    const pct = (v, total) => `${(v / total * 100).toFixed(3)}%`;
+    document.documentElement.style.setProperty('--case-aspect', (W / H).toFixed(4));
+    document.documentElement.style.setProperty('--plate-bottom', pct(shell.base / 2, H));
+    Object.assign(document.getElementById('module').style, {
+      left: pct(shell.wall, W), top: pct(shell.top, H), width: pct(m.w, W), height: pct(m.h, H),
+    });
+    Object.assign(document.getElementById('window').style, {
+      left: pct((m.w - p.w) / 2, m.w), top: pct((m.h - p.h) / 2, m.h), width: pct(p.w, m.w), height: pct(p.h, m.h),
+    });
+    document.getElementById('dims').textContent =
+      `外壳 ${W.toFixed(0)} × ${H.toFixed(0)} mm · 显示组件 ${m.w} × ${m.h} mm · 屏幕 ${p.px.join('×')}`;
+    document.getElementById('nameplate').textContent = STORY.nameplate.toUpperCase();
+  </script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

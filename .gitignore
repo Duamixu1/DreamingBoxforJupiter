@@ -1,0 +1,14 @@
+# 主办方开发套件与 Jupiter SDK：授权未明确允许公开分发，按 README「准备 SDK」从开发套件取
+Developer Kit_中文/
+prototype/vendor/jupiter-sdk/
+docs/Jupiter-Interlace-SDK-开发者指南.md
+
+# 用户生成的旅程（含个人照片）与来源不明的示例照片、旧截图
+prototype/journeys/*
+!prototype/journeys/.gitkeep
+prototype/assets/photos/
+captures/
+
+__pycache__/
+.claude/
+.DS_Store

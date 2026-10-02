@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Jupiter 校准</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 16px/1.4 system-ui, sans-serif; color: #eee; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #panel { position: fixed; left: 12px; right: 12px; bottom: 12px; padding: 12px; background: rgba(20,20,20,.92); border-radius: 12px; }
+  #panel.hidden { display: none; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
+  .row b { width: 64px; }
+  .row input { width: 110px; font: inherit; padding: 6px; background: #111; color: #fff; border: 1px solid #555; border-radius: 6px; }
+  button { font: inherit; padding: 8px 12px; background: #333; color: #fff; border: 1px solid #555; border-radius: 6px; }
+  button.on { background: #c55a11; border-color: #c55a11; }
+  #info { font-size: 13px; color: #aaa; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <div class="row"><b>图案</b>
+    <button data-pattern="numbers" class="on">编号</button>
+    <button data-pattern="lr">左右眼</button>
+    <button data-pattern="single">单视点</button>
+  </div>
+  <div class="row"><b>Pitch</b>
+    <button data-p="-0.001">−.001</button><button data-p="-0.0001">−.0001</button>
+    <input id="pitch" type="number" step="0.0001">
+    <button data-p="0.0001">+.0001</button><button data-p="0.001">+.001</button>
+  </div>
+  <div class="row"><b>Offset</b>
+    <button data-o="-0.5">−0.5</button><button data-o="-0.1">−0.1</button>
+    <input id="offset" type="number" step="0.05">
+    <button data-o="0.1">+0.1</button><button data-o="0.5">+0.5</button>
+  </div>
+  <div class="row"><b>快速试</b>
+    <button data-preset="0.27777,2">官方值</button>
+    <button data-preset="0.27777,0">O 0</button><button data-preset="0.27777,4">O 4</button>
+    <button data-preset="0.27777,6">O 6</button><button data-preset="0.27777,8">O 8</button>
+  </div>
+  <div class="row">
+    <button id="full">全屏</button>
+    <button id="save">保存到本机</button>
+    <button id="hide">隐藏面板（点屏幕再唤出）</button>
+  </div>
+  <div id="info"></div>
+</div>
+<script type="module">
+// 校准页：30 个逻辑视点各画一格测试图，交给 SDK 的 compositeAtlas 交织。
+// 闭上一只眼，Pitch 对时整屏只看到同一格；Offset 决定正前方看到哪一格。
+import { THREE, InterlaceRenderer } from './src/three.js';
+import { DISPLAY } from './src/config.js';
+
+const PROFILE_KEY = 'jupitermusic.profile'; // 与 main.js 共用，保存后音乐盒直接读取
+const VIEWS = 30, COLS = 6, ROWS = 5, TW = 240, TH = 384;
+const $ = (s) => document.querySelector(s);
+
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.prepend(renderer.domElement);
+
+let saved = null;
+try { saved = JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch { /* 无本地存储 */ }
+const calibration = { ...DISPLAY.calibration, ...saved?.calibration, tan: 10 };
+const interlacer = new InterlaceRenderer(renderer, { calibration, render: { ...DISPLAY.render, mode: 'interlaced' } });
+
+// —— 测试图集：格子从左到右、从下到上编号（SDK 约定）——
+const atlas = document.createElement('canvas');
+atlas.width = TW * COLS; atlas.height = TH * ROWS;
+const ctx = atlas.getContext('2d');
+const texture = new THREE.CanvasTexture(atlas);
+texture.colorSpace = THREE.SRGBColorSpace;
+texture.generateMipmaps = false;
+texture.minFilter = texture.magFilter = THREE.NearestFilter;
+
+let pattern = 'numbers';
+function drawAtlas() {
+  for (let i = 0; i < VIEWS; i++) {
+    const x = (i % COLS) * TW, y = (ROWS - 1 - Math.floor(i / COLS)) * TH;
+    let bg, label;
+    if (pattern === 'numbers') { bg = `hsl(${i * 10},80%,45%)`; label = String(i); }
+    else if (pattern === 'lr') { bg = i < 15 ? '#d22' : '#25d'; label = i < 15 ? 'L' : 'R'; }
+    else { bg = i === 14 ? '#fff' : '#000'; label = ''; }
+    ctx.fillStyle = bg; ctx.fillRect(x, y, TW, TH);
+    if (!label) continue;
+    ctx.font = 'bold 150px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 10; ctx.strokeStyle = '#000'; ctx.strokeText(label, x + TW / 2, y + TH / 2);
+    ctx.fillStyle = '#fff'; ctx.fillText(label, x + TW / 2, y + TH / 2);
+  }
+  texture.needsUpdate = true;
+}
+
+function resize() {
+  renderer.setPixelRatio(devicePixelRatio);
+  renderer.setSize(innerWidth, innerHeight, false);
+}
+
+function draw() {
+  interlacer.compositeAtlas({ texture, width: atlas.width, height: atlas.height, columns: COLS, rows: ROWS, views: VIEWS, encoding: 'srgb' });
+  const c = interlacer.getProfile().calibration;
+  $('#pitch').value = c.pitch.toFixed(5);
+  $('#offset').value = c.offset.toFixed(2);
+  const b = renderer.getDrawingBufferSize(new THREE.Vector2());
+  const ok = b.x === 1200 && b.y === 1920;
+  $('#info').textContent = `画布 ${b.x}×${b.y}（dpr ${devicePixelRatio}）${ok ? ' ✓ 与屏幕一致' : ' ⚠ 不是 1200×1920，请先全屏，否则参数不准'} · Tan 固定 10`;
+}
+
+function setCalib(patch) {
+  const c = interlacer.getProfile().calibration;
+  const next = { ...patch };
+  if ('offset' in next) next.offset = +(((next.offset % 10) + 10) % 10).toFixed(2); // 相位以 10 为周期
+  if ('pitch' in next) next.pitch = +next.pitch.toFixed(5);
+  interlacer.setCalibration({ ...c, ...next });
+  draw();
+}
+
+document.querySelectorAll('[data-pattern]').forEach((b) => b.addEventListener('click', () => {
+  pattern = b.dataset.pattern;
+  document.querySelectorAll('[data-pattern]').forEach((x) => x.classList.toggle('on', x === b));
+  drawAtlas(); draw();
+}));
+document.querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () =>
+  setCalib({ pitch: interlacer.getProfile().calibration.pitch + +b.dataset.p })));
+document.querySelectorAll('[data-o]').forEach((b) => b.addEventListener('click', () =>
+  setCalib({ offset: interlacer.getProfile().calibration.offset + +b.dataset.o })));
+// 官方值 = Jupiter World Viewer 内置预览图截图时记录的参数（pitch 0.27777 / offset 2 / tan 10）
+document.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => {
+  const [pitch, offset] = b.dataset.preset.split(',').map(Number);
+  setCalib({ pitch, offset });
+}));
+$('#pitch').addEventListener('change', (e) => setCalib({ pitch: +e.target.value }));
+$('#offset').addEventListener('change', (e) => setCalib({ offset: +e.target.value }));
+$('#full').addEventListener('click', () => document.documentElement.requestFullscreen?.().catch(() => {}));
+$('#hide').addEventListener('click', (e) => { e.stopPropagation(); $('#panel').classList.add('hidden'); });
+renderer.domElement.addEventListener('click', () => $('#panel').classList.remove('hidden'));
+$('#save').addEventListener('click', () => {
+  // 只覆盖 calibration，保留音乐盒自己的渲染参数
+  const profile = saved ?? JSON.parse(interlacer.exportProfile());
+  profile.calibration = interlacer.getProfile().calibration;
+  if (!saved) profile.render = { ...profile.render, ...DISPLAY.render };
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); saved = profile; $('#save').textContent = '已保存 ✓'; }
+  catch { $('#save').textContent = '保存失败'; }
+  setTimeout(() => { $('#save').textContent = '保存到本机'; }, 1500);
+});
+addEventListener('resize', () => { resize(); draw(); });
+document.addEventListener('fullscreenchange', () => { resize(); draw(); });
+
+resize(); drawAtlas(); draw();
+</script>
+</body>
+</html>

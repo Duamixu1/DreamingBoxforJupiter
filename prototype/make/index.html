@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f3ee">
+<title>做一份回忆旅程</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap">
+<link rel="stylesheet" href="./make.css">
+</head>
+<body>
+<div class="device">
+  <header class="bar" id="bar" hidden>
+    <button class="icon-btn" id="back" type="button" aria-label="上一步">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+    </button>
+    <ol class="dots" aria-label="进度"><li></li><li></li><li></li><li></li><li></li></ol>
+    <span class="step-label" id="step-label"></span>
+  </header>
+
+  <main class="screens">
+
+    <!-- S0 开始 -->
+    <section class="screen" data-screen="start">
+      <div class="start-art" aria-hidden="true">
+        <div class="mini-box"><div class="mini-stage"><img src="../assets/photos/sample-lighthouse.jpg" alt=""></div><div class="mini-plate"></div></div>
+      </div>
+      <div class="start-copy">
+        <h1>把你们去过的地方，<br>装进一个盒子</h1>
+        <p>选几张旅行照片，每张写一句话，再写一封信。几分钟后，TA 打开木盒，摇动摇柄，小火车会带着 TA 把这些地方再走一遍。</p>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="button" data-go="who">开始制作</button>
+        <button class="btn ghost" type="button" id="demo">用示例照片快速体验</button>
+        <a class="text-link" href="../?open" target="_blank" rel="noopener">先看一份做好的木盒</a>
+      </div>
+    </section>
+
+    <!-- S1 送给谁 -->
+    <section class="screen" data-screen="who" hidden>
+      <h2>这份礼物送给谁？</h2>
+      <label class="field">
+        <span>怎么称呼 TA</span>
+        <input id="recipient" type="text" maxlength="16" placeholder="例如：小满" autocomplete="off">
+      </label>
+      <fieldset class="field">
+        <legend>你们是</legend>
+        <div class="chips" id="relation">
+          <button type="button" class="chip" data-value="friend">朋友</button>
+          <button type="button" class="chip on" data-value="partner">恋人</button>
+          <button type="button" class="chip" data-value="family">家人</button>
+          <button type="button" class="chip" data-value="self">我自己</button>
+        </div>
+      </fieldset>
+      <fieldset class="field">
+        <legend>你们怎么出发</legend>
+        <div class="vehicles" id="vehicle">
+          <button type="button" class="vehicle on" data-value="train">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="13" rx="3"></rect><path d="M5 10h14M9 20l-2 2M15 20l2 2M8 16v4h8v-4"></path><circle cx="9" cy="13" r=".5"></circle><circle cx="15" cy="13" r=".5"></circle></svg>
+            <b>火车</b><small>同一座城市、一次自驾</small>
+          </button>
+          <button type="button" class="vehicle" data-value="plane" disabled>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l-7-3 1-2 8 1 4-6h2l-2 7 5 1 1 2-6 1-2 6h-2z"></path></svg>
+            <b>飞机</b><small>即将支持</small>
+          </button>
+        </div>
+      </fieldset>
+      <div class="actions"><button class="btn primary" type="button" id="who-next">下一步</button></div>
+    </section>
+
+    <!-- S2 传照片 -->
+    <section class="screen" data-screen="photos" hidden>
+      <h2>你们去过哪些地方？</h2>
+      <p class="hint">选 3–5 张旅行照片，一张就是一站。顺序就是旅程的顺序。</p>
+      <div class="photo-list" id="photo-list"></div>
+      <label class="add-photo" id="add-photo">
+        <input id="photo-input" type="file" accept="image/*" multiple>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        <span id="add-label">选择照片</span>
+      </label>
+      <div class="actions"><button class="btn primary" type="button" id="photos-next" disabled>下一步</button></div>
+    </section>
+
+    <!-- S3 确认 -->
+    <section class="screen" data-screen="confirm" hidden>
+      <h2>我们从照片里看到了</h2>
+      <p class="hint" id="confirm-hint">每张照片里最有辨识度的东西，会被做成盒子里的 3D 小模型。认错了就改掉。</p>
+      <div class="notice" id="manual-notice" hidden></div>
+      <div class="found-list" id="found-list"></div>
+      <div class="actions"><button class="btn primary" type="button" id="confirm-next" disabled>没问题</button></div>
+    </section>
+
+    <!-- S4 写信 -->
+    <section class="screen" data-screen="letter" hidden>
+      <h2>最后，写一封信</h2>
+      <p class="hint">旅程的终点，TA 继续摇，就会展开这封信。</p>
+      <div class="letter-paper">
+        <input id="greeting" type="text" maxlength="20" aria-label="称呼">
+        <textarea id="letter-body" rows="7" maxlength="400" aria-label="信的正文">献给我们去过的地方，
+也献给尚未抵达的远方。</textarea>
+        <input id="signature" type="text" maxlength="20" placeholder="— 你的名字" aria-label="落款">
+      </div>
+      <div class="actions"><button class="btn primary" type="button" id="letter-next">生成礼物</button></div>
+    </section>
+
+    <!-- S5 生成 -->
+    <section class="screen" data-screen="make" hidden>
+      <h2 id="make-title">正在把这些地方装进盒子</h2>
+      <p class="hint" id="make-hint">每站约 1–2 分钟，几站同时生成。可以先离开，木盒随时能打开这份礼物。</p>
+      <ol class="progress" id="progress"></ol>
+      <div class="done" id="done" hidden>
+        <div class="done-card">
+          <span class="eyebrow">礼物编号</span>
+          <code id="journey-id"></code>
+          <p>在木盒上打开下面的地址；或者直接打开「最新一份」，木盒会载入刚做好的这份礼物。</p>
+          <div class="link-row"><input id="journey-link" type="text" readonly aria-label="礼物地址"><button class="btn small" type="button" id="copy-link">复制</button></div>
+        </div>
+        <a class="btn primary" id="open-box" target="_blank" rel="noopener">在这台设备上预览</a>
+        <button class="btn ghost" type="button" id="restart">再做一份</button>
+      </div>
+      <p class="error" id="make-error" role="alert" hidden></p>
+    </section>
+
+  </main>
+</div>
+
+<template id="tpl-photo">
+  <div class="photo-item">
+    <div class="thumb"><img alt=""><span class="num"></span></div>
+    <div class="photo-meta">
+      <input class="caption" type="text" maxlength="24" placeholder="写一句话（选填）">
+      <div class="photo-tools">
+        <button type="button" class="tool up" aria-label="往前移">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 15l-6-6-6 6"></path></svg>
+        </button>
+        <button type="button" class="tool down" aria-label="往后移">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <button type="button" class="tool remove" aria-label="删除这张">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-found">
+  <div class="found">
+    <div class="found-photo">
+      <img alt="">
+      <div class="box" hidden></div>
+      <div class="scanning">识别中…</div>
+    </div>
+    <p class="tap-hint">点照片里的地标，可以重新框选</p>
+    <label class="field compact"><span>地名</span><input class="place" type="text" maxlength="30"></label>
+    <label class="field compact"><span>做成 3D 的地标</span><input class="landmark" type="text" maxlength="40" placeholder="例如：白色灯塔"></label>
+    <div class="field compact"><span>地貌</span><div class="chips small biome"></div></div>
+    <div class="field compact"><span>时段</span><div class="chips small tod"></div></div>
+  </div>
+</template>
+
+<script type="module" src="./make.js"></script>
+</body>
+</html>

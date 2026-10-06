@@ -28,6 +28,7 @@ stories/western/refs/elements/*/*_front_full.png
 # 用户在 /create 做的世界（含个人照片），只保留样例
 prototype/worlds/*
 !prototype/worlds/sample-mucha/
+!prototype/worlds/demo-case/
 !prototype/worlds/README.md
 
 # 用户网页生成的元素模型

@@ -29,7 +29,8 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE / "prototype"
 WORLDS = ROOT / "worlds"
 STYLES = ROOT / "assets" / "styles" / "styles.json"
-WORLD_ID = re.compile(r"^[a-z0-9]{6,32}$|^sample-[a-z0-9-]{1,32}$")
+WORLD_ID = re.compile(r"^[a-z0-9]{6,32}$|^sample-[a-z0-9-]{1,32}$|^demo-case$")
+DEMO = "demo-case"  # 评委案例的模板：素材预先用 Tripo 生成好，网页里的重画 / 生成 3D 播放模拟过程
 MAX_BODY = 60 * 1024 * 1024
 MAX_PHOTOS = 5
 STATION = (1200, 1920)
@@ -120,6 +121,26 @@ def create(payload):
     return read(wid)
 
 
+def lan_ip():
+    """这台电脑在局域网里的地址（相框要用它访问）；UDP connect 不发包，只用来让系统选出对外网卡"""
+    import socket
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("192.168.0.1", 9))
+            return s.getsockname()[0]
+    except OSError:
+        return None
+
+
+def create_demo():
+    """复制一份案例给这位访客：只复制 world.json，素材都指向 worlds/demo-case/（../demo-case/...）"""
+    w = json.loads((_dir(DEMO) / "world.json").read_text())
+    wid = secrets.token_hex(5)
+    w.update(created=time.time(), demo=True)
+    write(wid, w)
+    return read(wid)
+
+
 def analyze(wid):
     """Claude 看每张照片，给出站名和一个可以立体化的主体（只填空着的字段）"""
     if not musicbox_api.status()["recognition"]:
@@ -206,10 +227,14 @@ def handle(handler, method):
         parts = p.strip("/").split("/")  # api, worlds, <id>, ...
         if method == "POST" and len(parts) == 2:
             return musicbox_api._send(handler, 200, create(body))
+        if method == "POST" and parts[2:] == ["demo"]:
+            return musicbox_api._send(handler, 200, create_demo())
         wid = parts[2] if len(parts) > 2 else ""
         if len(parts) == 3 and method == "GET":
             return musicbox_api._send(handler, 200, read(wid))
         if len(parts) == 3 and method == "PUT":
+            if wid == DEMO:
+                return musicbox_api._send(handler, 403, {"error": "案例模板不能改"})
             with _lock:
                 write(wid, body)
             return musicbox_api._send(handler, 200, {"ok": True, "saved": time.time()})
@@ -231,7 +256,7 @@ def handle(handler, method):
                 w["status"] = "ready"
                 w["published"] = time.time()
                 write(wid, w)
-            return musicbox_api._send(handler, 200, {"ok": True, "device": f"/device?world={wid}", "id": wid})
+            return musicbox_api._send(handler, 200, {"ok": True, "device": f"/device?world={wid}", "id": wid, "lan": lan_ip(), "port": handler.server.server_address[1]})
         return musicbox_api._send(handler, 404, {"error": "没有这个接口"})
     except FileNotFoundError:
         return musicbox_api._send(handler, 404, {"error": "找不到这个世界"})

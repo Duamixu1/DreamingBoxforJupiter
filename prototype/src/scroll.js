@@ -52,6 +52,7 @@ export async function createScrollWorld(world, baseUrl, renderer) {
   const cardFor = (tex, w, h) => new Mesh(new PlaneGeometry(w, h), new MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: DoubleSide }));
 
   async function buildLayer(L, cx, order) { // eslint-disable-line no-param-reassign
+    if (L.hidden) return null;
     const d = L.depth ?? 0;
     if (L.kind === 'gradient') {
       const [x, y, s] = place(cx, STATION_PX[0] / 2, STATION_PX[1] / 2, d);
@@ -147,7 +148,10 @@ export async function createScrollWorld(world, baseUrl, renderer) {
     const g = c.getContext('2d');
     g.fillStyle = 'rgba(0,0,0,0)'; g.fillRect(0, 0, 1024, 360);
     g.fillStyle = world.souvenir?.ink ?? '#5a3e2b'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.font = '600 64px "Songti SC","STSong","Noto Serif SC",serif';
+    let fs = 64;  // 字号：一行放得下就一行，否则缩小，最多两行
+    const font = () => `600 ${fs}px "Songti SC","STSong","Noto Serif SC",serif`;
+    g.font = font();
+    while (fs > 44 && g.measureText(text).width > 900 && g.measureText(text).width < 1100) { fs -= 2; g.font = font(); }
     const rows = []; let row = '';
     for (const ch of text) { if (g.measureText(row + ch).width > 900) { rows.push(row); row = ch; } else row += ch; }
     if (row) rows.push(row);

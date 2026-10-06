@@ -99,9 +99,27 @@ $$('#steps li').forEach((li) => { li.onclick = () => go(+li.dataset.s); });
 
 // —— ① 照片与想法 ——
 function step1() {
+  $('#demo-cta').hidden = !!state.world;
+  $('#demo-go').onclick = async () => {
+    $('#demo-go').disabled = true; $('#demo-go').textContent = '载入中…';
+    try { state.world = await api('/api/worlds/demo', { method: 'POST', body: '{}' }); state.style = state.world.style; demoMode(); rebuildPreview(); go(1); }
+    catch (e) { alert(e.message); $('#demo-go').disabled = false; }
+  };
   if (state.world) {
-    panel.querySelector('.lead').textContent = '这个世界已经生成了。要换照片，请新建一个（刷新页面并去掉网址里的 ?w=）。';
+    panel.querySelector('.lead').textContent = state.world.demo ? '案例里已经放好了三张旅行照片（由 Tripo 生成）。可以改每一站的名字和你的想法，然后进入下一步。' : '这个世界已经生成了。要换照片，请新建一个（去掉网址里的 ?w=）。';
     $('#drop').hidden = true;
+    const box = $('#photos');
+    state.world.stations.forEach((st) => {
+      const el = document.createElement('div'); el.className = 'photo ro';
+      el.innerHTML = `<img src="/worlds/${state.world.id}/${st.photo}"><input maxlength="20" value="${st.title}">`;
+      el.querySelector('input').oninput = (e) => { st.title = e.target.value; save(); };
+      box.append(el);
+    });
+    $('#idea').value = state.world.idea ?? ''; $('#nameplate').value = state.world.nameplate ?? '';
+    $('#idea').oninput = (e) => { state.world.idea = e.target.value; save(); };
+    $('#nameplate').oninput = (e) => { state.world.nameplate = e.target.value; save(); };
+    $('#next1').disabled = false; $('#next1').onclick = () => go(2);
+    return;
   }
   const render = () => {
     $('#photos').innerHTML = '';
@@ -152,6 +170,7 @@ async function step2() {
   }
   $('#back2').onclick = () => go(1);
   const make = $('#make');
+  if (state.world?.demo) { make.textContent = '按这个风格画我的长卷'; make.onclick = () => { go(3); demoPaint(state.world.stations.map((_, i) => i)); }; return; }
   if (state.world) { make.textContent = '下一步：长卷'; make.onclick = () => go(3); return; }
   make.disabled = !state.photos.length;
   $('#make-hint').textContent = state.photos.length ? '' : '先回到第 1 步上传照片。';
@@ -169,6 +188,7 @@ async function step2() {
 function applyStyle(s) {
   const w = state.world;
   Object.assign(w, { style: s.id, wall: s.wall, frame: s.frame });
+  if (s.music) w.music = { id: s.music };   // 配乐跟着风格换（第 6 步还能再改）
   w.souvenir.bg = s.wall;
   for (const st of w.stations) { const sky = st.layers.find((L) => L.id === 'sky'); if (sky) Object.assign(sky, { top: s.sky[0], bottom: s.sky[1] }); }
   save();
@@ -189,14 +209,15 @@ function step3() {
   const render = () => {
     box.innerHTML = '';
     w.stations.forEach((st, i) => {
-      const job = w.paint?.[i];
+      const job = (w.demo ? demo.paint : w.paint)?.[i];
       const running = job && !job.done;
       const el = document.createElement('div'); el.className = 'station';
       const versions = st.versions ?? [];
+      const verName = (v) => (w.demo ? state.styles.find((s) => v.includes(`-${s.id}.`))?.name ?? v : null);
       el.innerHTML = `<div class="art" style="background-image:url('/worlds/${w.id}/${artOf(st)?.src}')"><span class="badge">${i + 1}</span></div>
         <div class="meta"><input value="${st.title}" maxlength="20">
           <div class="row"><button data-a="paint" ${running ? 'disabled' : ''}>${versions.length ? '再画一版' : '按风格重画'}</button>
-          ${versions.length ? `<select data-a="ver"><option value="${st.photo}">原照片</option>${versions.map((v, k) => `<option value="${v}">第 ${k + 1} 版</option>`).join('')}</select>` : ''}</div>
+          ${versions.length ? `<select data-a="ver"><option value="${st.photo}">原照片</option>${versions.map((v, k) => `<option value="${v}">${verName(v) ?? `第 ${k + 1} 版`}</option>`).join('')}</select>` : ''}</div>
           <div class="st ${job?.error ? 'bad' : ''}">${job ? (job.error ? `失败：${job.error}` : `${job.stage}${job.progress != null && !job.done ? ` ${job.progress}%` : ''}`) : ''}</div></div>`;
       el.querySelector('input').oninput = (e) => { st.title = e.target.value; save(); };
       el.querySelector('[data-a=paint]').onclick = () => paint([i]);
@@ -205,7 +226,7 @@ function step3() {
         ver.value = artOf(st).src;
         ver.onchange = () => {
           const L = artOf(st); L.src = ver.value;
-          if (ver.value === st.photo) { Object.assign(L, coverBox(st.photoSize)); delete L.fit; } else { Object.assign(L, { fit: 'cover', x: 0, y: 0 }); delete L.w; delete L.h; }
+          if (ver.value === st.photo && st.photoSize) { Object.assign(L, coverBox(st.photoSize)); delete L.fit; } else { Object.assign(L, { fit: 'cover', x: 0, y: 0 }); delete L.w; delete L.h; }
           save(); render();
         };
       }
@@ -227,6 +248,7 @@ function step3() {
     if (Object.values(fresh.paint ?? {}).some((j) => !j.done)) paintPoll = setTimeout(poll, 2500);
   };
   const paint = async (list) => {
+    if (w.demo) return demoPaint(list);
     if (!confirm(`用 Tripo 按「${state.styles.find((s) => s.id === w.style)?.name ?? w.style}」重画 ${list.length} 站？每站约 10 额度。`)) return;
     for (const i of list) await api(`/api/worlds/${w.id}/paint/${i}`, { method: 'POST', body: '{}' }).catch((e) => alert(e.message));
     poll();
@@ -234,8 +256,10 @@ function step3() {
   const step3Render = () => { if (state.step === 3) render(); };
   $('#paint-all').onclick = () => paint(w.stations.map((_, i) => i));
   $('#next3').onclick = () => go(4);
-  render(); poll();
+  render(); if (!w.demo) poll();
+  step3Hook = render;
 }
+let step3Hook = () => {};
 const coverBox = ([w, h] = [1200, 1920]) => {
   const k = Math.max(STATION_PX[0] / w, STATION_PX[1] / h);
   return { x: Math.round((STATION_PX[0] - w * k) / 2), y: Math.round((STATION_PX[1] - h * k) / 2), w: Math.round(w * k), h: Math.round(h * k) };
@@ -326,6 +350,7 @@ function step4() {
 }
 
 async function generate(st, el) {
+  if (state.world.demo) return demoGenerate(st, el);
   const steps = el.kind === 'character' ? '重画成正面参考图 → 你确认 → 四视图 → 你确认 → 建模' : '重画成单独完整的参考图 → 你确认 → 建模';
   if (!confirm(`「${el.name}」生成 3D：${steps}\n会消耗 Tripo 额度，每一步都可以在确认时取消。`)) return;
   const { im, toImg } = await artImage(st);
@@ -371,7 +396,8 @@ async function pollSlotsOnce() {
 function pipeHtml(s) {
   const job = s?.job, art = job?.artifacts;
   if (!art) return '';
-  const img = (src, t) => `<figure><a href="/${src}" target="_blank"><img src="/${src}?v=${job.updated}"></a>${t}</figure>`;
+  const url = (src) => (src.startsWith('../') ? `/worlds/${state.world.id}/${src}` : `/${src}`);
+  const img = (src, t) => `<figure><a href="${url(src)}" target="_blank"><img src="${url(src)}?v=${job.updated}"></a>${t}</figure>`;
   return `<div class="thumbs">${img(art.source, '框选')}${art.reference ? img(art.reference, '参考图') : ''}${(art.views ?? []).map((v, i) => img(v, ['前', '左', '后', '右'][i])).join('')}</div>`
     + (job.waiting ? `<div class="gate"><b>${job.waiting === 'reference' ? '参考图合格吗？' : '四视图合格吗？'}</b> 看手指是否分开、脸是否正面、有没有被遮挡或多出来的东西
       <div class="row"><button data-g="ok">通过，继续</button><button data-g="redo">重做这一步</button><button data-g="cancel">取消</button></div></div>` : '');
@@ -383,13 +409,13 @@ function paintElements() {
   const st = state.world.stations[cur];
   for (const el of st.elements ?? []) {
     const d = $(`.el[data-id="${el.id}"]`); if (!d) continue;
-    const s = state.slots.find((x) => x.id === slotId(el)), job = s?.job, running = job && job.done === false;
+    const s = demo.slots[el.id] ?? state.slots.find((x) => x.id === slotId(el)), job = s?.job, running = job && job.done === false;
     const stEl = d.querySelector('.st');
     stEl.className = 'st' + (job?.failed ? ' bad' : s?.model ? ' ok' : '');
-    stEl.textContent = running ? `${job.stage}${job.progress != null ? ` ${job.progress}%` : ''}` : job?.failed ? `失败：${job.message}` : s?.model ? `3D 已放进画里 · ${job?.message ?? ''}` : '';
+    stEl.textContent = running ? `${job.stage}${job.progress != null ? ` ${job.progress}%` : ''}` : job?.failed ? `失败：${job.message}` : (s?.model || (state.world.demo && el.model)) ? `3D 已放进画里 · ${job?.message ?? (state.world.demo ? '案例里已经生成好了，可以点「重新生成 3D」看一遍过程' : '')}` : '';
     d.querySelector('[data-a=gen]').disabled = !!running;
     const pipe = d.querySelector('.pipe'), key = JSON.stringify([job?.artifacts, job?.waiting]);
-    if (pipe.dataset.key !== key) { pipe.dataset.key = key; pipe.innerHTML = pipeHtml(s); bindGate(pipe, s); }
+    if (pipe.dataset.key !== key) { pipe.dataset.key = key; pipe.innerHTML = pipeHtml(s); s?.demo ? bindDemoGate(pipe, s) : bindGate(pipe, s); }
   }
 }
 
@@ -455,16 +481,24 @@ function step6() {
   }
   // 纪念品：前面做好的元素，或单独生成
   const sel = $('#souv');
+  if (w.demo) {
+    const opts = [{ v: 'assets/models/demo_souvenir.glb', n: '灯塔音乐盒（案例纪念品）' }, ...w.stations.flatMap((st) => (st.elements ?? []).map((e) => ({ v: e.demo.model, n: `${st.title} · ${e.name}` })))];
+    sel.innerHTML = '<option value="">（不要纪念品）</option>' + opts.map((o) => `<option value="${o.v}">${o.n}</option>`).join('');
+    sel.value = w.souvenir.model ?? '';
+    sel.onchange = () => { w.souvenir.model = sel.value || null; save(); $('#pv-p').value = 990; };
+    $('#souv-up').textContent = '演示：上传照片单独生成纪念品';
+    $('#souv-up').onclick = () => demoSouvenir();
+  }
   const models = w.stations.flatMap((st) => (st.elements ?? []).filter((e) => e.model).map((e) => ({ id: slotId(e), name: `${st.title} · ${e.name}` })));
   const own = state.slots.find((s) => s.id === `w_${w.id}_souvenir` && s.model);
   if (own) models.unshift({ id: own.id, name: '单独生成的纪念品' });
-  sel.innerHTML = '<option value="">（还没有）</option>' + models.map((m) => `<option value="${m.id}">${m.name}</option>`).join('');
+  if (!w.demo) sel.innerHTML = '<option value="">（还没有）</option>' + models.map((m) => `<option value="${m.id}">${m.name}</option>`).join('');
   const curId = w.souvenir.model?.match(/models\/(.+?)\.glb/)?.[1] ?? '';
-  sel.value = curId;
-  sel.onchange = () => { const s = state.slots.find((x) => x.id === sel.value); w.souvenir.model = sel.value ? `assets/models/${sel.value}.glb?v=${Math.round(s?.modelTime ?? 0)}` : null; save(); pv.show(w.stations.length); $('#pv-p').value = 990; };
+  if (!w.demo) sel.value = curId;
+  if (!w.demo) sel.onchange = () => { const s = state.slots.find((x) => x.id === sel.value); w.souvenir.model = sel.value ? `assets/models/${sel.value}.glb?v=${Math.round(s?.modelTime ?? 0)}` : null; save(); pv.show(w.stations.length); $('#pv-p').value = 990; };
   $('#souv-text').value = w.souvenir.text ?? '';
   $('#souv-text').oninput = (e) => { w.souvenir.text = e.target.value; save(); $('#pv-p').value = 990; };
-  $('#souv-up').onclick = () => {
+  if (!w.demo) $('#souv-up').onclick = () => {
     const input = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*' });
     input.onchange = async () => {
       const f = input.files[0]; if (!f) return;
@@ -480,7 +514,8 @@ function step6() {
   $('#publish').onclick = async () => {
     if (!w.souvenir.model && !confirm('还没有选纪念品，长卷尽头会是空的。仍然完成？')) return;
     const r = await api(`/api/worlds/${w.id}/publish`, { method: 'POST', body: '{}' });
-    const host = /^(localhost|127\.)/.test(location.hostname) ? '<电脑的局域网 IP>' : location.hostname;
+    w.status = 'ready';  // 之后的保存不要把状态改回草稿
+    const host = /^(localhost|127\.)/.test(location.hostname) ? (r.lan ?? '<电脑的局域网 IP>') : location.hostname;
     const done = $('#done'); done.hidden = false;
     done.innerHTML = `<b>完成！礼物编号 ${r.id}</b><p>在 Jupiter 相框的浏览器里打开：</p><code>http://${host}:${location.port}${r.device}</code>
       <p class="hint">打开后轻点屏幕进入全屏；相框和这台电脑要在同一个 Wi-Fi 下。想自动播放一遍，在地址末尾加 <b>&amp;auto</b>。</p>`;
@@ -499,11 +534,74 @@ function paintSouvenirJob() {
 }
 
 // ======================================================================
+// 案例模式：结果是事先用 Tripo 生成的真实素材，这里只是把等待过程模拟出来（不调用 Tripo）
+const demo = { paint: {}, slots: {} };
+const sleep = (ms) => new Promise((ok) => setTimeout(ok, ms));
+function demoMode() { $('#demo-bar').hidden = !state.world?.demo; }
+async function animate(set, stage, ms, steps = 12) {
+  for (let k = 0; k <= steps; k++) { set({ stage, progress: Math.round((k / steps) * 100), done: false }); await sleep(ms / steps); }
+}
+async function demoPaint(list) {
+  const w = state.world;
+  for (const i of list) {
+    const st = w.stations[i], src = st.demoArt?.[w.style];
+    if (!src) continue;
+    const set = (j) => { demo.paint[i] = j; step3Hook(); };
+    set({ stage: '上传照片', progress: null, done: false }); await sleep(500);
+    await animate(set, `按「${state.styles.find((s) => s.id === w.style)?.name}」重画`, 2200);
+    const L = st.layers.find((x) => x.id === 'art');
+    Object.assign(L, { src, fit: 'cover', x: 0, y: 0 }); delete L.w; delete L.h;
+    if (!st.versions.includes(src)) st.versions.push(src);
+    for (const M of st.layers) if (M.kind === 'model') delete M.hidden;   // 立体元素跟着画好的这一站一起出现
+    set({ stage: '完成', progress: 100, done: true });
+    save(); pv.show(i);
+  }
+}
+let demoGateResolve = null;
+async function demoGenerate(st, el) {
+  if (!el.demo) { alert('案例模式下，新框的元素不会真的生成（会消耗 Tripo 额度）。可以对已有的三个元素点「重新生成 3D」看一遍过程，或者回到首页自己做一卷。'); return; }
+  const w = state.world;
+  const job = { demo: true, job: { done: false, updated: Date.now(), artifacts: { source: el.demo.crop } } };
+  demo.slots[el.id] = job;
+  const set = (j) => { Object.assign(job.job, j, { updated: Date.now() }); paintElements(); };
+  const L = st.layers.find((x) => x.id === el.id);
+  if (L) L.hidden = true;
+  rebuildPreview();
+  while (true) {
+    await animate(set, '重画成给 3D 看的参考图', 2400);
+    job.job.artifacts.reference = el.demo.ref;
+    set({ stage: '等你确认参考图', progress: null, waiting: 'reference' });
+    const ans = await new Promise((ok) => { demoGateResolve = ok; });
+    set({ waiting: null });
+    if (ans === 'cancel') { delete demo.slots[el.id]; if (L) delete L.hidden; save(); paintElements(); return; }
+    if (ans === 'ok') break;
+  }
+  await animate(set, 'Tripo 建模', 3200, 16);
+  await animate(set, '减面、烘贴图（适配相框）', 1200, 6);
+  if (L) delete L.hidden;
+  set({ stage: '完成', done: true, message: '已放回画里同一个位置' });
+  save(); pv.show(w.stations.indexOf(st));
+}
+function bindDemoGate(box) {
+  box.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => demoGateResolve?.(b.dataset.g); });
+}
+async function demoSouvenir() {
+  const box = $('#souv-job');
+  const steps = [['重画成纪念品参考图', 2200], ['Tripo 建模', 3000], ['减面、烘贴图', 1000]];
+  for (const [t, ms] of steps) {
+    for (let k = 0; k <= 10; k++) { box.innerHTML = `<div class="hint">${t} ${k * 10}%</div><div class="bar"><i style="width:${k * 10}%"></i></div>`; await sleep(ms / 10); }
+    if (t.startsWith('重画')) box.insertAdjacentHTML('beforeend', `<div class="thumbs"><figure><img src="/worlds/${state.world.id}/${state.world.souvenir.demo.ref}">参考图</figure></div>`);
+  }
+  state.world.souvenir.model = 'assets/models/demo_souvenir.glb'; $('#souv').value = state.world.souvenir.model;
+  box.innerHTML = `<div class="hint">纪念品做好了：灯塔音乐盒</div><div class="thumbs"><figure><img src="/worlds/${state.world.id}/${state.world.souvenir.demo.ref}">参考图</figure></div>`;
+  save(); $('#pv-p').value = 990;
+}
+
 (async () => {
   state.styles = await api('/api/styles').catch(() => []);
   const wid = params.get('w');
   if (wid) {
-    try { state.world = await api(`/api/worlds/${wid}`); state.style = state.world.style; rebuildPreview(); }
+    try { state.world = await api(`/api/worlds/${wid}`); state.style = state.world.style; demoMode(); rebuildPreview(); }
     catch (e) { alert(`找不到这个世界：${e.message}`); }
   }
   go(state.world ? +(params.get('s') ?? 3) : 1);

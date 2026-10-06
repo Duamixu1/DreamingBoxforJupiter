@@ -1,0 +1,206 @@
+{
+ "version": 1,
+ "status": "draft",
+ "demo": true,
+ "title": "我们一起走过的地方",
+ "idea": "送给一起旅行过的你：海边的灯塔、山里的小屋、樱花树下的长椅",
+ "nameplate": "For You",
+ "style": "mucha",
+ "wall": "#e9dcc4",
+ "frame": null,
+ "frameDepth": 2.6,
+ "secondsPerStation": 18,
+ "stations": [
+  {
+   "title": "海边的灯塔",
+   "photo": "../demo-case/photo-0.webp",
+   "demoArt": {
+    "mucha": "../demo-case/art-0-mucha.webp",
+    "shanhai": "../demo-case/art-0-shanhai.webp",
+    "pixel": "../demo-case/art-0-pixel.webp",
+    "chibi": "../demo-case/art-0-chibi.webp"
+   },
+   "versions": [],
+   "layers": [
+    {
+     "id": "sky",
+     "kind": "gradient",
+     "top": "#c9d9e2",
+     "bottom": "#f2e2cf",
+     "depth": -8
+    },
+    {
+     "id": "art",
+     "kind": "card",
+     "src": "../demo-case/photo-0.webp",
+     "fit": "cover",
+     "x": 0,
+     "y": 0,
+     "depth": -1.5
+    },
+    {
+     "id": "lighthouse",
+     "kind": "model",
+     "src": "assets/models/demo_lighthouse.glb",
+     "x": 768.0,
+     "y": 775,
+     "h": 418,
+     "depth": 0.6,
+     "anim": "sway",
+     "ry": 0,
+     "hidden": true
+    }
+   ],
+   "elements": [
+    {
+     "id": "lighthouse",
+     "name": "灯塔",
+     "kind": "object",
+     "rect": [
+      600,
+      357,
+      336,
+      418
+     ],
+     "model": 1,
+     "demo": {
+      "crop": "../demo-case/el-lighthouse-crop.webp",
+      "ref": "../demo-case/el-lighthouse-ref.webp",
+      "model": "assets/models/demo_lighthouse.glb"
+     }
+    }
+   ]
+  },
+  {
+   "title": "山间小屋",
+   "photo": "../demo-case/photo-1.webp",
+   "demoArt": {
+    "mucha": "../demo-case/art-1-mucha.webp",
+    "shanhai": "../demo-case/art-1-shanhai.webp",
+    "pixel": "../demo-case/art-1-pixel.webp",
+    "chibi": "../demo-case/art-1-chibi.webp"
+   },
+   "versions": [],
+   "layers": [
+    {
+     "id": "sky",
+     "kind": "gradient",
+     "top": "#c9d9e2",
+     "bottom": "#f2e2cf",
+     "depth": -8
+    },
+    {
+     "id": "art",
+     "kind": "card",
+     "src": "../demo-case/photo-1.webp",
+     "fit": "cover",
+     "x": 0,
+     "y": 0,
+     "depth": -1.5
+    },
+    {
+     "id": "cottage",
+     "kind": "model",
+     "src": "assets/models/demo_cottage.glb",
+     "x": 612.0,
+     "y": 1330,
+     "h": 720,
+     "depth": 0.8,
+     "anim": "sway",
+     "ry": 0,
+     "hidden": true
+    }
+   ],
+   "elements": [
+    {
+     "id": "cottage",
+     "name": "小木屋",
+     "kind": "object",
+     "rect": [
+      192,
+      717,
+      840,
+      568
+     ],
+     "model": 1,
+     "demo": {
+      "crop": "../demo-case/el-cottage-crop.webp",
+      "ref": "../demo-case/el-cottage-ref.webp",
+      "model": "assets/models/demo_cottage.glb"
+     }
+    }
+   ]
+  },
+  {
+   "title": "樱花湖畔",
+   "photo": "../demo-case/photo-2.webp",
+   "demoArt": {
+    "mucha": "../demo-case/art-2-mucha.webp",
+    "shanhai": "../demo-case/art-2-shanhai.webp",
+    "pixel": "../demo-case/art-2-pixel.webp",
+    "chibi": "../demo-case/art-2-chibi.webp"
+   },
+   "versions": [],
+   "layers": [
+    {
+     "id": "sky",
+     "kind": "gradient",
+     "top": "#c9d9e2",
+     "bottom": "#f2e2cf",
+     "depth": -8
+    },
+    {
+     "id": "art",
+     "kind": "card",
+     "src": "../demo-case/photo-2.webp",
+     "fit": "cover",
+     "x": 0,
+     "y": 0,
+     "depth": -1.5
+    },
+    {
+     "id": "bench",
+     "kind": "model",
+     "src": "assets/models/demo_bench.glb",
+     "x": 540.0,
+     "y": 1895,
+     "h": 650,
+     "depth": 1.4,
+     "anim": "breathe",
+     "ry": -0.75,
+     "hidden": true
+    }
+   ],
+   "elements": [
+    {
+     "id": "bench",
+     "name": "长椅上的我们",
+     "kind": "object",
+     "rect": [
+      216,
+      1245,
+      648,
+      650
+     ],
+     "model": 1,
+     "demo": {
+      "crop": "../demo-case/el-bench-crop.webp",
+      "ref": "../demo-case/el-bench-ref.webp",
+      "model": "assets/models/demo_bench.glb"
+     }
+    }
+   ]
+  }
+ ],
+ "souvenir": {
+  "model": "assets/models/demo_souvenir.glb",
+  "text": "我们一起走过的地方，都在这里。",
+  "bg": "#e9dcc4",
+  "demo": {
+   "ref": "../demo-case/el-souvenir-ref.webp"
+  }
+ },
+ "music": {
+  "id": "waltz"
+ }
+}

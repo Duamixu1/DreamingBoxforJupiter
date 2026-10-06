@@ -17,6 +17,7 @@
   <span class="save" id="save"></span>
 </header>
 
+<div class="demo-bar" id="demo-bar" hidden>案例模式：「按风格重画」「生成 3D」是模拟播放，结果是事先用 Tripo 生成的真实素材，不消耗额度。<a href="index.html">自己做一卷</a></div>
 <main class="layout">
   <section class="panel" id="panel"></section>
   <aside class="preview" id="preview">
@@ -31,6 +32,7 @@
 </main>
 
 <template id="t-step1">
+  <div class="demo-cta" id="demo-cta"><div><b>第一次来？先看一个完整的案例</b><span>三张旅行照片 → 四种画风 → 立体元素 → 纪念品，每一步都能操作；会花 Tripo 额度的步骤用预先生成好的真实结果模拟播放。</span></div><button class="primary" id="demo-go">直接体验案例</button></div>
   <h2>上传几张想珍藏的照片</h2>
   <p class="lead">1–5 张，每张会成为长卷里的一站，按顺序从左到右展开。给每张写一句话，会成为这一站的名字。</p>
   <label class="drop" id="drop"><input type="file" accept="image/*" multiple hidden id="files"><b>点这里，或把照片拖进来</b><span>手机上会先缩小再上传</span></label>

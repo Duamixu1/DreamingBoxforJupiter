@@ -34,6 +34,8 @@ python3 Jupitermusic/serve.py
 | `…/?device` | 相框模式：全屏、无木盒外观、默认交织 3D；输入来自实体摇柄 |
 | `…/?debug` | 打开调试面板（任何时候按 `D` 也行）：状态、摇速、进度、校准参数 |
 | `…/?open` | 载入即开盖，调试用 |
+| `…/create` | **用户网页**：照片 + 一句想法 → 选风格（穆夏 / 山海经 / 像素 / Q 版）→ Tripo 按风格重画成长卷 → 框选元素生成 3D → 排布预览 → 选曲与纪念品 → 礼物编号。后端 [world_api.py](world_api.py)，数据格式见 [prototype/worlds/README.md](prototype/worlds/README.md) |
+| `…/device?world=<编号>` | 相框播放用户做好的长卷；`world=sample-mucha` 是样例 |
 | `…/studio` | **布景工作台**（电脑上用）：「精修工作台」页签 = 原图排版 / 元素拆分画布 / 3D 预览（见 stories/western/layers.md）；「四扇窗布景」页签 = 四扇窗并排、左右拖动看，选槽位上传 2D 图 → Tripo 生成 3D → Blender 处理 → 自动换上，只看进度；也可以直接上传在 Tripo 网页生成好的 GLB。见 [studio_api.py](studio_api.py) |
 | `…/?theme=classic` | 切回小火车旅程。默认布景是穆夏《一日四时》（黑猫），在 `config.js` 的 `SCENE.theme` 改；`?journey=` 总用小火车 |
 | `…/?auto` | 匀速自动摇（没接实体摇柄时看连贯效果）；相框上也可以手指绕屏幕中心画圈来摇 |

@@ -31,7 +31,7 @@ BLENDER = os.environ.get("BLENDER", "/Applications/Blender.app/Contents/MacOS/Bl
 MAX_UPLOAD = 300 * 1024 * 1024
 LAYER_DOCS = HERE / "prototype" / "assets" / "layers"   # 精修工作台：每扇窗的原图排版 + 元素拆分
 WINDOWS = ["dawn", "noon", "dusk", "night"]
-ELEMENT_ID = re.compile(r"^el_(dawn|noon|dusk|night)_[a-z0-9_-]{1,40}$")
+ELEMENT_ID = re.compile(r"^el_(dawn|noon|dusk|night)_[a-z0-9_-]{1,40}$|^w_[a-z0-9]{6,32}_[a-z0-9_-]{1,40}$")  # w_：用户网页里某个世界的元素
 
 # 槽位：和 prototype/src/mucha.js 的 MUCHA_SLOTS 对应。args 是给处理脚本的参数
 SLOTS = {
@@ -92,7 +92,7 @@ def _set(slot, **fields):
 def _element_slot(sid, name=None):
     """精修元素的槽位：el_<窗>_<元素 id>，按布景小件处理（体素重建 + 减面）"""
     if sid not in SLOTS:
-        SLOTS[sid] = {"name": name or sid, "window": WINDOWS.index(sid.split("_")[1]), "kind": "prop", "element": True,
+        SLOTS[sid] = {"name": name or sid, "window": WINDOWS.index(sid.split("_")[1]) if sid.startswith("el_") else None, "kind": "prop", "element": True, "world": sid.split("_")[1] if sid.startswith("w_") else None,
                       "args": ["--faces", "1500", "--voxel", "0.005"]}
     elif name:
         SLOTS[sid]["name"] = name
@@ -101,7 +101,7 @@ def _element_slot(sid, name=None):
 
 def slots():
     # 以前生成过的精修元素（服务器重启后从文件里找回来）
-    for f in list(MODELS.glob("el_*.glb")) + ([d for d in SOURCES.glob("el_*") if d.is_dir()] if SOURCES.exists() else []):
+    for f in list(MODELS.glob("el_*.glb")) + list(MODELS.glob("w_*.glb")) + ([d for d in [*SOURCES.glob("el_*"), *SOURCES.glob("w_*")] if d.is_dir()] if SOURCES.exists() else []):
         if ELEMENT_ID.match(f.stem if f.suffix else f.name):
             _element_slot(f.stem if f.suffix else f.name)
     out = []
@@ -192,7 +192,7 @@ IMAGE_MODEL = os.environ.get("TRIPO_IMAGE_MODEL", "gemini_3_pro_image_preview")
 STYLE = "Art Nouveau, Alphonse Mucha lithograph illustration style, soft muted colors, clean ink outlines"
 PROMPT_CHARACTER = (
     "Recreate the character from the reference image as a clean 3D-modeling reference image. "
-    "Keep the same identity, face, hairstyle, outfit design and colors, " + STYLE + ". "
+    "Keep the same identity, face, hairstyle, outfit design and colors, {style}. "
     "Full body from head to feet, centered, front view, neutral relaxed A-pose, arms slightly away from the body, "
     "both hands fully visible with five clearly separated fingers, face looking straight at the camera, "
     "symmetric facial features, hair and fabric kept away from face and hands, no overlapping limbs. "
@@ -200,7 +200,7 @@ PROMPT_CHARACTER = (
     "no props, no scenery. Subject fills about 80% of the image height.")
 PROMPT_OBJECT = (
     "Recreate only the {name} from the reference image as a standalone 3D-modeling reference image. "
-    "Keep its shape, colors and design, " + STYLE + ". Complete any hidden or cropped parts so the whole object "
+    "Keep its shape, colors and design, {style}. Complete any hidden or cropped parts so the whole object "
     "is visible. {hint}Front view, orthographic, centered, nothing overlapping it, plain pure white background, "
     "soft even lighting, no shadows, no text, no other objects, no scenery. Object fills about 80% of the image.")
 COST_HINT = {"character": "参考图约 10 + 四视图 10 + 建模", "object": "参考图约 10 + 建模"}
@@ -260,7 +260,7 @@ def _gate(slot, step):
     return ans
 
 
-def _run_pipeline(slot, image, ext, kind, name, hint, auto):
+def _run_pipeline(slot, image, ext, kind, name, hint, auto, style=None):
     try:
         bal0 = (balance() or {}).get("balance")
         d = SOURCES / slot
@@ -271,7 +271,9 @@ def _run_pipeline(slot, image, ext, kind, name, hint, auto):
         art = {"source": f"assets/sources/{slot}/source.{ext}"}
         _set(slot, stage="上传", message="上传原图", artifacts=art, kind=kind)
         token = _tripo("POST", "/upload", files=(f"source.{ext}", image, f"image/{'jpeg' if ext == 'jpg' else ext}"))["data"]["image_token"]
-        prompt = PROMPT_CHARACTER if kind == "character" else PROMPT_OBJECT.format(name=name or "object", hint=(hint.strip() + " ") if hint else "")
+        sty = style or STYLE  # 用户网页的世界传自己的风格；工作台默认穆夏
+        prompt = (PROMPT_CHARACTER.format(style=sty) + (" " + hint.strip() if hint else "")) if kind == "character" \
+            else PROMPT_OBJECT.format(name=name or "object", hint=(hint.strip() + " ") if hint else "", style=sty)
 
         # ① 重画参考图（可重做）
         while True:
@@ -385,7 +387,7 @@ def handle(handler, method):
                 return musicbox_api._send(handler, 400, {"error": "服务器没有配置 TRIPO_API_KEY"})
             ext = "png" if body[:4] == b"\x89PNG" else "webp" if body[8:12] == b"WEBP" else "jpg"
             kind = (q.get("kind") or ["character" if slot.startswith("mucha_lady_") else "object"])[0]
-            target, args = _run_pipeline, (slot, body, ext, kind, (q.get("name") or [""])[0], (q.get("hint") or [""])[0], (q.get("auto") or ["0"])[0] == "1")
+            target, args = _run_pipeline, (slot, body, ext, kind, (q.get("name") or [""])[0], (q.get("hint") or [""])[0], (q.get("auto") or ["0"])[0] == "1", (q.get("style") or [None])[0])
         elif url.path.endswith("/generate"):
             if not os.environ.get("TRIPO_API_KEY"):
                 return musicbox_api._send(handler, 400, {"error": "服务器没有配置 TRIPO_API_KEY，只能上传已经生成好的 GLB"})

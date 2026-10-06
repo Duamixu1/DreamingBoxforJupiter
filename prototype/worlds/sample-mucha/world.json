@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "title": "一日四时 · 样例长卷",
+  "nameplate": "For You",
+  "style": "mucha",
+  "secondsPerStation": 18,
+  "wall": "#e9dcc4",
+  "frame": "assets/styles/mucha/frame.webp",
+  "frameDepth": 2.6,
+  "stations": [
+    { "title": "晨之苏醒", "layers": [
+      { "id": "sky", "kind": "gradient", "top": "#c9d9e2", "bottom": "#f2e2cf", "depth": -8 },
+      { "id": "crown", "kind": "card", "src": "tree_crown.webp", "x": 620, "y": 170, "w": 393, "h": 1100, "depth": -3.5 },
+      { "id": "trees", "kind": "card", "src": "trees.webp", "x": 170, "y": 300, "w": 562, "h": 1200, "depth": -2.2 },
+      { "id": "woman", "kind": "card", "src": "woman.webp", "x": 250, "y": 260, "w": 717, "h": 1600, "depth": 0 },
+      { "id": "butterfly", "kind": "model", "src": "assets/models/mucha_butterfly.glb", "x": 880, "y": 700, "h": 170, "depth": 1.4, "anim": "bob" }
+    ]},
+    { "title": "昼之光辉", "frame": false, "layers": [
+      { "id": "sky", "kind": "gradient", "top": "#a9cbe2", "bottom": "#f2e8d5", "depth": -8 },
+      { "id": "tree", "kind": "model", "src": "assets/models/mucha_tree.glb", "x": 1040, "y": 1650, "h": 1000, "depth": -3, "anim": "sway" },
+      { "id": "panel", "kind": "card", "src": "panel-1.webp", "x": 264, "y": 60, "w": 672, "h": 1800, "depth": 0 }
+    ]},
+    { "title": "暮之沉思", "frame": false, "layers": [
+      { "id": "sky", "kind": "gradient", "top": "#7e5a78", "bottom": "#e9a15a", "depth": -8 },
+      { "id": "panel", "kind": "card", "src": "panel-2.webp", "x": 264, "y": 60, "w": 672, "h": 1800, "depth": 0 },
+      { "id": "lily", "kind": "model", "src": "assets/models/mucha_flower_lily.glb", "x": 160, "y": 1880, "h": 380, "depth": 1.8, "anim": "sway" }
+    ]},
+    { "title": "夜之安眠", "frame": false, "layers": [
+      { "id": "sky", "kind": "gradient", "top": "#151a36", "bottom": "#3a4170", "depth": -8 },
+      { "id": "panel", "kind": "card", "src": "panel-3.webp", "x": 264, "y": 60, "w": 672, "h": 1800, "depth": 0 }
+    ]}
+  ],
+  "souvenir": { "model": "assets/models/mucha_butterfly.glb", "text": "从清晨到深夜，我都在想你。", "bg": "#efe3cc" },
+  "music": { "id": "waltz" }
+}

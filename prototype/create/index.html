@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>做一卷音乐长卷</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="create.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">梦境盒 <span>把珍惜的时刻，做成一卷会唱歌的长卷</span></div>
+  <ol class="steps" id="steps">
+    <li data-s="1">照片与想法</li><li data-s="2">选风格</li><li data-s="3">长卷</li>
+    <li data-s="4">立体元素</li><li data-s="5">排布预览</li><li data-s="6">音乐与纪念品</li>
+  </ol>
+  <span class="save" id="save"></span>
+</header>
+
+<main class="layout">
+  <section class="panel" id="panel"></section>
+  <aside class="preview" id="preview">
+    <div class="device"><div class="bezel"><div class="screen" id="screen"></div></div></div>
+    <div class="pv-ctl">
+      <input type="range" id="pv-p" min="0" max="1000" value="80">
+      <button id="pv-play">▶</button>
+      <label><input type="checkbox" id="pv-wig" checked> 立体摇摆</label>
+    </div>
+    <div class="pv-note" id="pv-note">右侧是盒子里会看到的样子（相框 135 × 217 mm，竖放）。拖进度条 = 转摇柄。</div>
+  </aside>
+</main>
+
+<template id="t-step1">
+  <h2>上传几张想珍藏的照片</h2>
+  <p class="lead">1–5 张，每张会成为长卷里的一站，按顺序从左到右展开。给每张写一句话，会成为这一站的名字。</p>
+  <label class="drop" id="drop"><input type="file" accept="image/*" multiple hidden id="files"><b>点这里，或把照片拖进来</b><span>手机上会先缩小再上传</span></label>
+  <div class="photos" id="photos"></div>
+  <div class="field"><label>你的想法</label><textarea id="idea" rows="2" placeholder="比如：送给妈妈的 60 岁生日，想起我们一起去过的海边"></textarea></div>
+  <div class="field"><label>木盒铭牌</label><input id="nameplate" maxlength="24" placeholder="For You"></div>
+  <div class="actions"><button class="primary" id="next1" disabled>下一步：选风格</button></div>
+</template>
+
+<template id="t-step2">
+  <h2>选一种画风</h2>
+  <p class="lead">长卷、立体元素和装饰框都按这个风格来画，也会带上一首相配的曲子。</p>
+  <div class="styles" id="styles"></div>
+  <div class="actions"><button id="back2">上一步</button><button class="primary" id="make">生成我的长卷</button></div>
+  <p class="hint" id="make-hint"></p>
+</template>
+
+<template id="t-step3">
+  <h2>你的长卷</h2>
+  <p class="lead">现在每一站先放着原照片。点「按风格重画」，Tripo 会把照片画成所选的风格（每站约 10 额度）。不满意可以再画，旧的版本都留着。</p>
+  <div class="scroll" id="scroll"></div>
+  <div class="actions"><button id="paint-all">全部按风格重画</button><button class="primary" id="next3">下一步：立体元素</button></div>
+</template>
+
+<template id="t-step4">
+  <h2>让画里的东西立起来</h2>
+  <p class="lead">在画上框出想立体化的东西（人、建筑、树、花……），它会被重画成适合 3D 的参考图，你确认后再生成 3D 模型，放回画里同一个位置。一站建议 1–3 个。</p>
+  <div class="st-tabs" id="st-tabs"></div>
+  <div class="el-work">
+    <div class="el-canvas"><canvas id="el-cv"></canvas><span class="hint">在画上拖一个框</span></div>
+    <div class="el-list" id="el-list"></div>
+  </div>
+  <div class="actions"><button id="back4">上一步</button><button class="primary" id="next4">下一步：排布预览</button></div>
+</template>
+
+<template id="t-step5">
+  <h2>排布与预览</h2>
+  <p class="lead">右边就是盒子里的效果。「自动排布」按画面位置给每样东西安排前后深度：越靠下越靠近你。也可以逐个调整。</p>
+  <div class="actions left"><button id="auto">自动排布</button></div>
+  <div class="layers" id="layers"></div>
+  <div class="actions"><button id="back5">上一步</button><button class="primary" id="next5">下一步：音乐与纪念品</button></div>
+</template>
+
+<template id="t-step6">
+  <h2>配一首曲子，留一件纪念品</h2>
+  <p class="lead">音乐只在摇的时候响，停手就停。长卷的尽头会升起一件纪念品，下面是你想说的一句话。</p>
+  <div class="songs" id="songs"></div>
+  <div class="field"><label>纪念品</label><select id="souv"></select><div class="hint">用前面做好的某个立体元素，或者单独上传一张物件的照片生成。</div>
+    <button id="souv-up">上传一张照片单独生成纪念品</button><div id="souv-job"></div></div>
+  <div class="field"><label>纪念品下面的一句话</label><input id="souv-text" maxlength="40" placeholder="愿你一直被温柔对待"></div>
+  <div class="actions"><button id="back6">上一步</button><button class="primary" id="publish">完成，送到相框</button></div>
+  <div class="done" id="done" hidden></div>
+</template>
+
+<script type="module" src="create.js"></script>
+</body>
+</html>

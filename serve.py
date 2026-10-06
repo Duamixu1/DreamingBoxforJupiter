@@ -21,6 +21,7 @@ if _env.exists():
 
 import musicbox_api  # noqa: E402  读密钥之后再导入
 import studio_api  # noqa: E402
+import world_api  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent / "prototype"
 CAPTURES = ROOT.parent / "captures"
@@ -42,20 +43,25 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Location", "/?device&open" + ("&" + rest if rest and rest != "open" else ""))
             self.end_headers()
             return
+        if self.path in ("/create", "/create/"):  # 用户网页
+            self.send_response(302)
+            self.send_header("Location", "/create/index.html")
+            self.end_headers()
+            return
         if self.path == "/studio":  # 布景工作台
             self.send_response(302)
             self.send_header("Location", "/studio.html")
             self.end_headers()
             return
-        if not (studio_api.handle(self, "GET") or musicbox_api.handle(self, "GET")):
+        if not (world_api.handle(self, "GET") or studio_api.handle(self, "GET") or musicbox_api.handle(self, "GET")):
             super().do_GET()
 
     def do_PUT(self):
-        if not studio_api.handle(self, "PUT"):
+        if not (world_api.handle(self, "PUT") or studio_api.handle(self, "PUT")):
             self.send_error(404)
 
     def do_POST(self):
-        if studio_api.handle(self, "POST") or musicbox_api.handle(self, "POST"):
+        if world_api.handle(self, "POST") or studio_api.handle(self, "POST") or musicbox_api.handle(self, "POST"):
             return
         self._capture()
 

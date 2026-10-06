@@ -1,0 +1,30 @@
+[
+  {
+    "id": "mucha", "name": "穆夏新艺术", "desc": "柔和的花卉、流动的线条、拱窗画框",
+    "prompt": "Art Nouveau in the manner of Alphonse Mucha's lithographs: soft muted pastel palette of ivory, ochre gold, dusty rose and sage green, elegant flowing ink outlines, decorative flowers, graceful figures",
+    "palette": ["#f2e8d5", "#c9a55a", "#c98b8b", "#9daf8c", "#8fafb0"],
+    "sky": ["#c9d9e2", "#f2e2cf"], "wall": "#e9dcc4",
+    "frame": "assets/styles/mucha/frame.webp", "music": "waltz", "sample": "worlds/sample-mucha/panel-0.webp"
+  },
+  {
+    "id": "shanhai", "name": "山海经工笔", "desc": "青绿山水、祥云、古籍里的灵兽",
+    "prompt": "classical Chinese gongbi painting inspired by the Shan Hai Jing: blue-green landscape colors, fine ink line work, auspicious clouds, mist between mountains, mythical gentle creatures, silk scroll texture",
+    "palette": ["#e9e1c9", "#3f7f78", "#7fa88e", "#c2493d", "#2f3f52"],
+    "sky": ["#c7d7cf", "#efe6d2"], "wall": "#e6dcc3",
+    "frame": null, "music": "pentatonic", "sample": null
+  },
+  {
+    "id": "pixel", "name": "像素", "desc": "16 色像素画、等距小场景",
+    "prompt": "cozy 16-color pixel art, crisp large pixels, limited warm palette, simple readable shapes, isometric-feeling diorama, no dithering noise",
+    "palette": ["#2b2d42", "#8d99ae", "#ef8354", "#ffd166", "#06d6a0"],
+    "sky": ["#7ec0ee", "#ffe9b8"], "wall": "#d9d2c3",
+    "frame": null, "music": "chip", "sample": null
+  },
+  {
+    "id": "chibi", "name": "Q 版原图", "desc": "照片里的人和物变成可爱的 Q 版",
+    "prompt": "cute chibi illustration of the original photo: big heads, small bodies, soft rounded shapes, clean outlines, keep the original colors and clothing, gentle pastel lighting",
+    "palette": ["#ffd9e0", "#fff4dc", "#b5d8f0", "#ffb38a", "#7a5c58"],
+    "sky": ["#ffd9e0", "#fff4dc"], "wall": "#f3e6dc",
+    "frame": null, "music": "lullaby", "sample": null
+  }
+]

@@ -4,6 +4,7 @@ import { THREE, InterlaceRenderer, createCalibrationPanel } from './three.js';
 import { DISPLAY, TUNING, INPUT, STORY, SCENE, MUCHA } from './config.js';
 import { createWorld, clip } from './scene.js';
 import { createMuchaWorld, loadMuchaModels } from './mucha.js';
+import { createScrollWorld } from './scroll.js';
 import { loadModels, loadLandmarks } from './assets.js';
 import { WorldClock, trainDistance, letterPhase } from './worldclock.js';
 import { CrankInput } from './crank.js';
@@ -13,7 +14,9 @@ const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 const deviceMode = params.has('device');
 // 布景主题：mucha（一日四时 · 黑猫）或 classic（小火车）。制作端的旅程（?journey=）总用 classic
-const theme = params.get('theme') ?? (params.has('journey') ? 'classic' : SCENE.theme);
+// ?world=<编号>：用户在网页（/create）做好的音乐长卷，见 prototype/worlds/
+const worldId = params.get('world');
+const theme = worldId ? 'scroll' : params.get('theme') ?? (params.has('journey') ? 'classic' : SCENE.theme);
 const mucha = theme === 'mucha';
 document.body.classList.toggle('device', deviceMode);
 
@@ -40,6 +43,11 @@ interlacer.subscribe((p) => { renderMode = p.render.mode; });
 // —— 旅程：默认演示旅程，或制作端生成的 ?journey=<id> ——
 async function loadStory() {
   if (mucha) return { story: { ...STORY, stations: MUCHA.stations, letter: MUCHA.letter }, base: location.href };
+  if (theme === 'scroll') {
+    const base = new URL(`worlds/${encodeURIComponent(worldId)}/`, location.href).href;
+    const w = await (await fetch(base + 'world.json', { cache: 'no-store' })).json();
+    return { story: { ...STORY, nameplate: w.nameplate ?? STORY.nameplate, stations: w.stations.map((st) => ({ ...st, name: st.title ?? '' })), world: w }, base };
+  }
   let id = params.get('journey');
   if (id === 'latest') {
     try { id = (await (await fetch('/api/journeys/latest', { cache: 'no-store' })).json()).id; }
@@ -63,9 +71,10 @@ const { story, base: storyBase } = await loadStory();
 $('#nameplate').textContent = story.nameplate.toUpperCase();
 
 // 先加载 Tripo 模型：assets/models 里的布景槽位 + 这段旅程每站的地标；缺的用程序化占位
-const templates = mucha ? new Map() : await loadModels(renderer, clip);
-if (!mucha) for (const [k, v] of await loadLandmarks(renderer, clip, story.stations, storyBase)) templates.set(k, v);
-const world = mucha ? createMuchaWorld(story, await loadMuchaModels(renderer)) : createWorld(story, templates);
+const templates = mucha || story.world ? new Map() : await loadModels(renderer, clip);
+if (!mucha && !story.world) for (const [k, v] of await loadLandmarks(renderer, clip, story.stations, storyBase)) templates.set(k, v);
+const world = story.world ? await createScrollWorld(story.world, storyBase, renderer)
+  : mucha ? createMuchaWorld(story, await loadMuchaModels(renderer)) : createWorld(story, templates);
 const JOURNEY_LENGTH = world.journeyLength;
 const resize = () => {
   renderer.setPixelRatio(devicePixelRatio);
@@ -76,8 +85,9 @@ new ResizeObserver(resize).observe(host);
 resize();
 
 // —— 状态 ——
-const clock = new WorldClock((mucha ? MUCHA.secondsPerStation : TUNING.secondsPerStation) * story.stations.length);
-const music = new MusicBox();
+const clock = new WorldClock(story.world ? (story.world.secondsPerStation ?? 18) * (story.stations.length + 1)
+  : (mucha ? MUCHA.secondsPerStation : TUNING.secondsPerStation) * story.stations.length);
+const music = new MusicBox(story.world?.music?.id);
 let lidOpen = false, lidChangedAt = -10;
 let done = false, arrived = false, everCranked = false;
 let lastChuff = 0, tickAcc = 0;

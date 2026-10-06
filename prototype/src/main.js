@@ -1,8 +1,9 @@
 // 主循环：开合 + 手摇 → 世界时间 → 画面 / 声音。
 // ?device 进入相框模式：全屏、无木盒外观、默认交织输出；摇柄与霍尔传感器经 USB HID 键盘接入。
 import { THREE, InterlaceRenderer, createCalibrationPanel } from './three.js';
-import { DISPLAY, TUNING, INPUT, STORY } from './config.js';
+import { DISPLAY, TUNING, INPUT, STORY, SCENE, MUCHA } from './config.js';
 import { createWorld, clip } from './scene.js';
+import { createMuchaWorld, loadMuchaModels } from './mucha.js';
 import { loadModels, loadLandmarks } from './assets.js';
 import { WorldClock, trainDistance, letterPhase } from './worldclock.js';
 import { CrankInput } from './crank.js';
@@ -11,6 +12,9 @@ import { MusicBox } from './audio.js';
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 const deviceMode = params.has('device');
+// 布景主题：mucha（一日四时 · 黑猫）或 classic（小火车）。制作端的旅程（?journey=）总用 classic
+const theme = params.get('theme') ?? (params.has('journey') ? 'classic' : SCENE.theme);
+const mucha = theme === 'mucha';
 document.body.classList.toggle('device', deviceMode);
 
 // —— 渲染 ——
@@ -35,6 +39,7 @@ interlacer.subscribe((p) => { renderMode = p.render.mode; });
 
 // —— 旅程：默认演示旅程，或制作端生成的 ?journey=<id> ——
 async function loadStory() {
+  if (mucha) return { story: { ...STORY, stations: MUCHA.stations, letter: MUCHA.letter }, base: location.href };
   let id = params.get('journey');
   if (id === 'latest') {
     try { id = (await (await fetch('/api/journeys/latest', { cache: 'no-store' })).json()).id; }
@@ -58,9 +63,9 @@ const { story, base: storyBase } = await loadStory();
 $('#nameplate').textContent = story.nameplate.toUpperCase();
 
 // 先加载 Tripo 模型：assets/models 里的布景槽位 + 这段旅程每站的地标；缺的用程序化占位
-const templates = await loadModels(renderer, clip);
-for (const [k, v] of await loadLandmarks(renderer, clip, story.stations, storyBase)) templates.set(k, v);
-const world = createWorld(story, templates);
+const templates = mucha ? new Map() : await loadModels(renderer, clip);
+if (!mucha) for (const [k, v] of await loadLandmarks(renderer, clip, story.stations, storyBase)) templates.set(k, v);
+const world = mucha ? createMuchaWorld(story, await loadMuchaModels(renderer)) : createWorld(story, templates);
 const JOURNEY_LENGTH = world.journeyLength;
 const resize = () => {
   renderer.setPixelRatio(devicePixelRatio);
@@ -71,7 +76,7 @@ new ResizeObserver(resize).observe(host);
 resize();
 
 // —— 状态 ——
-const clock = new WorldClock(TUNING.secondsPerStation * story.stations.length);
+const clock = new WorldClock((mucha ? MUCHA.secondsPerStation : TUNING.secondsPerStation) * story.stations.length);
 const music = new MusicBox();
 let lidOpen = false, lidChangedAt = -10;
 let done = false, arrived = false, everCranked = false;
@@ -105,6 +110,25 @@ const unlock = () => {
 };
 window.addEventListener('pointerdown', unlock);
 window.addEventListener('keydown', unlock);
+
+// 相框上必须全屏：交织的原点是画布左上角，浏览器地址栏 / 导航栏把画布挤偏，立体就会错位成一张发糊的 2D 画面
+if (deviceMode) {
+  const tip = document.createElement('div');
+  tip.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99;padding:28px 36px;border-radius:18px;'
+    + 'background:rgba(20,16,12,.78);color:#f5ecd8;font:600 30px/1.5 system-ui,sans-serif;text-align:center;pointer-events:none;max-width:80vw';
+  document.body.append(tip);
+  const refreshTip = () => {
+    const full = !!document.fullscreenElement || (innerHeight >= screen.height - 2 && innerWidth >= screen.width - 2);
+    const flat = renderMode !== 'interlaced';
+    tip.innerHTML = flat ? '现在是 2D 预览<br><span style="font-weight:400;font-size:22px">网址里去掉 mode=2d 才是裸眼 3D</span>'
+      : full ? '' : '轻点屏幕进入全屏<br><span style="font-weight:400;font-size:22px">不全屏时立体会错位</span>';
+    tip.style.display = tip.innerHTML ? 'block' : 'none';
+  };
+  document.addEventListener('fullscreenchange', refreshTip);
+  window.addEventListener('resize', refreshTip);
+  interlacer.subscribe(() => setTimeout(refreshTip));
+  refreshTip();
+}
 
 $('#lid').addEventListener('click', () => setLid(!lidOpen));
 window.addEventListener('keydown', (e) => {
@@ -147,13 +171,13 @@ renderer.setAnimationLoop((ms) => {
   const dist = trainDistance(p, JOURNEY_LENGTH);
   if (dist - lastChuff >= 1.1) {
     lastChuff = dist;
-    if (dist < JOURNEY_LENGTH - 0.05) music.chuff(Math.min(1, 0.5 + clock.worldSpeed * 0.4));
+    if (world.hasTrain !== false && dist < JOURNEY_LENGTH - 0.05) music.chuff(Math.min(1, 0.5 + clock.worldSpeed * 0.4));
   }
   if (!arrived && dist >= JOURNEY_LENGTH - 0.01) { arrived = true; music.chime(); }
   if (!done && p >= 1) { done = true; music.pause(2.2); }
 
   world.update({
-    worldTime: clock.worldTime, dist, letterU: letterPhase(p),
+    worldTime: clock.worldTime, dist, progress: p, letterU: letterPhase(p),
     parallax: renderMode === '2d' && !deviceMode ? parallax : still,
   });
   if (host.clientWidth > 0 && host.clientHeight > 0) {
@@ -167,7 +191,7 @@ renderer.setAnimationLoop((ms) => {
 // 不依赖 requestAnimationFrame，页面在后台时也能用。
 function renderNow() {
   const p = clock.progress;
-  world.update({ worldTime: clock.worldTime, dist: trainDistance(p, JOURNEY_LENGTH), letterU: letterPhase(p), parallax: still });
+  world.update({ worldTime: clock.worldTime, dist: trainDistance(p, JOURNEY_LENGTH), progress: p, letterU: letterPhase(p), parallax: still });
   interlacer.render(world.scene, world.camera);
 }
 const capture = (name = `frame-${Date.now()}`) => new Promise((resolve) => {
@@ -183,7 +207,7 @@ function simulate(seconds, revPerSec = 1) {
   for (let t = 0; t < seconds; t += dt) {
     clock.update(dt, revPerSec * Math.PI * 2 * dt, true);
     const p = clock.progress;
-    world.update({ worldTime: clock.worldTime, dist: trainDistance(p, JOURNEY_LENGTH), letterU: letterPhase(p), parallax: still });
+    world.update({ worldTime: clock.worldTime, dist: trainDistance(p, JOURNEY_LENGTH), progress: p, letterU: letterPhase(p), parallax: still });
   }
 }
 
@@ -239,4 +263,4 @@ if (params.has('debug')) toggleDebug();
 if (params.has('open')) setLid(true);
 
 // 仅供调试与自动验证
-window.musicbox = { clock, music, setLid, resetDemo, interlacer, capture, simulate, get lidOpen() { return lidOpen; } };
+window.musicbox = { clock, music, world, setLid, resetDemo, interlacer, capture, simulate, get lidOpen() { return lidOpen; } };

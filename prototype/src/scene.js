@@ -203,7 +203,8 @@ function letterTexture(L) {
   return tex;
 }
 
-function buildLetter(letter) {
+// opts.from：信封升起的起点（可在每帧改它）；opts.seal / opts.crescent：封蜡颜色，crescent 为真时做成新月形
+export function buildLetter(letter, { from = new Vector3(3.2, 0.9, 0.6), seal: sealColor = '#a8322b', crescent = false } = {}) {
   const root = new Group();
   root.visible = false;
 
@@ -217,7 +218,8 @@ function buildLetter(letter) {
   const flapShape = new THREE.Shape([new THREE.Vector2(-W / 2, 0), new THREE.Vector2(W / 2, 0), new THREE.Vector2(0, -H * 0.62)]);
   const flap = new Group(); flap.position.set(0, H / 2, 0.07); env.add(flap);
   flap.add(new Mesh(new THREE.ShapeGeometry(flapShape), m('#ead9b5')));
-  const seal = new Mesh(new CircleGeometry(0.2, 20), m('#a8322b')); seal.position.set(0, -H * 0.55, 0.01); flap.add(seal);
+  const seal = new Mesh(new CircleGeometry(0.2, 20), m(sealColor)); seal.position.set(0, -H * 0.55, 0.01); flap.add(seal);
+  if (crescent) { const bite = new Mesh(new CircleGeometry(0.17, 20), m('#ead9b5')); bite.position.set(0.08, 0.05, 0.002); seal.add(bite); }
   root.add(env);
 
   // 信纸：上下两半，中线对折
@@ -244,7 +246,7 @@ function buildLetter(letter) {
   const dim = new Mesh(new PlaneGeometry(80, 60), new MeshBasicMaterial({ color: '#000', transparent: true, opacity: 0, depthWrite: false }));
   dim.visible = false;
 
-  const envFrom = new Vector3(3.2, 0.9, 0.6);
+  const envFrom = from;
   const flat = new Quaternion();
 
   // 信件的终点姿态跟着镜头算：沿视线放在镜头前方，正对观众

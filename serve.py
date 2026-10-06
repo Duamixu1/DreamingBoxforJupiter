@@ -9,7 +9,18 @@ import http.server
 import pathlib
 import sys
 
-import musicbox_api
+import os
+
+# 本机密钥放在 Jupitermusic/.env（不进仓库），格式 KEY=VALUE；已设置的环境变量优先
+_env = pathlib.Path(__file__).resolve().parent / ".env"
+if _env.exists():
+    for _line in _env.read_text().splitlines():
+        _k, _, _v = _line.strip().partition("=")
+        if _k and not _k.startswith("#") and _v:
+            os.environ.setdefault(_k, _v)
+
+import musicbox_api  # noqa: E402  读密钥之后再导入
+import studio_api  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent / "prototype"
 CAPTURES = ROOT.parent / "captures"
@@ -24,11 +35,27 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self):
-        if not musicbox_api.handle(self, "GET"):
+        # 相框上手输网址容易漏掉「?」：/device、/device&open、/device?auto 都跳到 /?device&open...
+        if self.path == "/device" or self.path.startswith(("/device&", "/device?")):
+            rest = self.path[len("/device"):].lstrip("?&")
+            self.send_response(302)
+            self.send_header("Location", "/?device&open" + ("&" + rest if rest and rest != "open" else ""))
+            self.end_headers()
+            return
+        if self.path == "/studio":  # 布景工作台
+            self.send_response(302)
+            self.send_header("Location", "/studio.html")
+            self.end_headers()
+            return
+        if not (studio_api.handle(self, "GET") or musicbox_api.handle(self, "GET")):
             super().do_GET()
 
+    def do_PUT(self):
+        if not studio_api.handle(self, "PUT"):
+            self.send_error(404)
+
     def do_POST(self):
-        if musicbox_api.handle(self, "POST"):
+        if studio_api.handle(self, "POST") or musicbox_api.handle(self, "POST"):
             return
         self._capture()
 

@@ -12,3 +12,15 @@ captures/
 __pycache__/
 .claude/
 .DS_Store
+
+# 布景工作台：上传的原图和 Tripo 原始模型（几十 MB 一个）
+prototype/assets/sources/
+
+# 本机密钥（TRIPO_API_KEY 等），不进仓库
+.env
+
+# 穆夏原画实拍高清版：每张 8–9 MB（CC BY-SA 4.0），本地用，不进仓库；扫描版（公有领域）留在仓库里
+stories/western/refs/mucha/photo-*.jpg
+
+# 元素提取的原分辨率中间图（每张十几 MB），本地用
+stories/western/refs/elements/*/*_front_full.png

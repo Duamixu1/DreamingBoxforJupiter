@@ -34,6 +34,8 @@ python3 Jupitermusic/serve.py
 | `…/?device` | 相框模式：全屏、无木盒外观、默认交织 3D；输入来自实体摇柄 |
 | `…/?debug` | 打开调试面板（任何时候按 `D` 也行）：状态、摇速、进度、校准参数 |
 | `…/?open` | 载入即开盖，调试用 |
+| `…/studio` | **布景工作台**（电脑上用）：「精修工作台」页签 = 原图排版 / 元素拆分画布 / 3D 预览（见 stories/western/layers.md）；「四扇窗布景」页签 = 四扇窗并排、左右拖动看，选槽位上传 2D 图 → Tripo 生成 3D → Blender 处理 → 自动换上，只看进度；也可以直接上传在 Tripo 网页生成好的 GLB。见 [studio_api.py](studio_api.py) |
+| `…/?theme=classic` | 切回小火车旅程。默认布景是穆夏《一日四时》（黑猫），在 `config.js` 的 `SCENE.theme` 改；`?journey=` 总用小火车 |
 | `…/?auto` | 匀速自动摇（没接实体摇柄时看连贯效果）；相框上也可以手指绕屏幕中心画圈来摇 |
 | `…/calibrate.html` | 屏幕校准：没有背标签时用测试图目测 Pitch / Offset，保存后音乐盒直接读取 |
 
@@ -55,6 +57,20 @@ ANTHROPIC_API_KEY=… TRIPO_API_KEY=… uv run --python 3.12 --with anthropic Ju
 ```
 
 系统自带的 Python 3.9 装不了新版 anthropic（需要 3.10+），所以用 uv 临时带上 Python 3.12 和 anthropic 运行，不改系统环境。不需要识别时，`python3 Jupitermusic/serve.py` 也能跑。
+
+布景工作台要从 2D 图直接生成 3D，需要 Tripo **v2 开放接口**的 key（`api.tripo3d.ai/v2/openapi`，和制作端用的 v3 地址不通用）和 Blender（默认 `/Applications/Blender.app`，或设置 `BLENDER` 环境变量）。key 写进 `Jupitermusic/.env`（已在 .gitignore 里，不进仓库），`serve.py` 启动时自动读取：
+
+```
+TRIPO_API_KEY=tsk_…
+```
+
+然后照常启动 `python3 Jupitermusic/serve.py 5174`。
+
+「上传 2D 图生成」和精修工作台的「生成 3D」走同一条流水线（`studio_api.py` 的 `_run_pipeline`）：先用 Tripo `generate_image`（默认 `gemini_3_pro_image_preview`，可用 `TRIPO_IMAGE_MODEL` 改）把元素按原画的色彩和画法重画成「给 3D 看的参考图」——人物是正面 A-pose、双手五指分开、脸正对镜头，物件是单独完整、白底——**停下来等你确认**；人物再用 `generate_multiview_image` 生成前 / 左 / 后 / 右四视图，**再确认一次**，然后 `multiview_to_model`；物件直接 `image_to_model`。两个确认点都可以「重做这一步」或取消，参考图不合格就不会进入建模。做完在卡片上显示本次用了多少额度。
+
+注意：这里用的是 Tripo v2 开放接口，官方公告 2026-10-01 起停止服务、11-01 下线，要尽快换成 v3 的 key 并迁移接口。工作台顶部会显示 Tripo 余额；每个槽位可以「查看 3D」：旋转、缩放、对比 Tripo 原始模型，「立体摇摆」模拟在裸眼屏前左右看。
+
+然后在电脑浏览器打开 `http://localhost:5174/studio`。没有 key 时只能用「上传 GLB」。上传的原图和 Tripo 原始模型存在 `prototype/assets/sources/<槽位>/`（不进仓库），处理结果覆盖 `prototype/assets/models/<槽位>.glb`。
 
 照片在手机上先缩到 1600 px 再上传；地标框裁出来送给 Tripo（`image-to-model`，3000 面以内），没框就用文字生成（`text-to-model`）。旅程存在 `prototype/journeys/<编号>/`（`journey.json`、照片、地标 GLB）。接口说明见 [musicbox_api.py](musicbox_api.py) 开头。服务开在局域网里，没有账号和鉴权，只适合演示。
 
@@ -97,6 +113,7 @@ prototype/
   src/audio.js          音乐盒合成器、火车声、棘轮声、到站铃
   src/assets.js         Tripo 模型槽位、GLB 加载与实例化
   src/scene.js          微缩世界：六种地貌模板、火车、明信片、信件
+  src/mucha.js          穆夏《一日四时》版：四扇尖拱窗、四位时辰女子、长发路径、黑猫与信（故事见 stories/western/）
   src/myth.js           幻境层：连续地形、远山、浮空仙山、云海过渡、青鸟 / 鲲 / 独角白鹿 / 天灯
   src/kit.js            布景通用零件：随机数、缓动、基础几何体、顶点色合批
   make/                 制作端网页（index.html、make.css、make.js）

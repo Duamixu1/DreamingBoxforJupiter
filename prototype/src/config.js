@@ -29,8 +29,32 @@ export const STORY = {
   },
 };
 
+// —— 穆夏《一日四时》版（stories/western）——————————————————————
+// 四扇尖拱窗：晨春 / 昼夏 / 暮秋 / 夜冬。黑猫叼着信踩着长发走完一天，最后在夜的身边睡下。
+export const MUCHA = {
+  secondsPerStation: 20, // 4 站 × 20 = 80 秒（含信件展开），旅程本身约 69 秒
+  stations: [
+    { name: '晨之苏醒', season: 'dawn' },
+    { name: '昼之光辉', season: 'noon' },
+    { name: '暮之沉思', season: 'dusk' },
+    { name: '夜之安眠', season: 'night' },
+  ],
+  letter: {
+    greeting: '亲爱的你：',
+    lines: [
+      { text: '从清晨到深夜，', style: 'zh' },
+      { text: '从春天到冬天，', style: 'zh' },
+      { gap: 1 },
+      { text: '我都在想你。', style: 'zh' },
+    ],
+    signature: '— Gift Duo',
+    date: '2026 · 秋',
+  },
+};
+
 // —— 画面开关 ——————————————————————————————————————————
 export const SCENE = {
+  theme: 'mucha',   // mucha：一日四时（黑猫）；classic：小火车旅程。网址 ?theme= 可临时切换；?journey= 总用 classic
   postcards: false, // 到站明信片：真机上照片细节太花，先关掉
 };
 

@@ -122,6 +122,40 @@ window.addEventListener('pointerdown', unlock);
 window.addEventListener('keydown', unlock);
 
 // 相框上必须全屏：交织的原点是画布左上角，浏览器地址栏 / 导航栏把画布挤偏，立体就会错位成一张发糊的 2D 画面
+// 相框上的操作提示：没接实体摇柄时，用手指绕屏幕画圈来摇；也可以一键自动播放
+if (deviceMode) {
+  const guide = document.createElement('div');
+  guide.className = 'crank-guide';
+  guide.innerHTML = `<style>
+    .crank-guide { position: fixed; left: 50%; bottom: 7%; transform: translateX(-50%); z-index: 98; display: flex; flex-direction: column; align-items: center; gap: 18px;
+      padding: 26px 34px; border-radius: 26px; background: rgba(24,18,12,.72); color: #f6eedf; font: 600 30px/1.4 -apple-system, "PingFang SC", sans-serif;
+      text-align: center; pointer-events: none; transition: opacity .6s; max-width: 86vw; }
+    .crank-guide.hide { opacity: 0; }
+    .crank-guide.small { font-size: 22px; padding: 14px 22px; gap: 10px; }
+    .crank-guide.small .ring, .crank-guide.small button { display: none; }
+    .crank-guide .ring { width: 120px; height: 120px; animation: cg-spin 2.4s linear infinite; }
+    .crank-guide span { font-weight: 400; font-size: .7em; opacity: .85; }
+    .crank-guide button { pointer-events: auto; font: 600 26px/1 -apple-system, "PingFang SC", sans-serif; padding: 16px 30px; border-radius: 999px; border: 0; background: #f3ecdf; color: #3a3f33; }
+    @keyframes cg-spin { to { transform: rotate(360deg); } }
+  </style>
+  <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="46" fill="none" stroke="#f6eedf55" stroke-width="6"/>
+    <path d="M60 14 A46 46 0 0 1 106 60" fill="none" stroke="#e9c57a" stroke-width="8" stroke-linecap="round"/><path d="M98 50 l8 12 l10 -10" fill="none" stroke="#e9c57a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="txt">用手指绕着屏幕画圈<br><span>就是转动摇柄：画得越快，世界走得越快；停手，世界就停下</span></div>
+  <button type="button">自动播放</button>`;
+  document.body.append(guide);
+  guide.querySelector('button').onclick = (e) => { e.stopPropagation(); unlock(); crank.auto = true; guide.classList.add('hide'); };
+  guide.querySelector('button').onpointerdown = (e) => e.stopPropagation();
+  // 开始摇以后隐藏；停手 6 秒（还没摇完）再浮出一个小提示
+  let idleFor = 0, lastT = performance.now();
+  (function watch() {
+    const t = performance.now(), dt = (t - lastT) / 1000; lastT = t;
+    if (clock.isCranking || crank.auto) { idleFor = 0; guide.classList.add('hide'); }
+    else if (everCranked && !done) { idleFor += dt; if (idleFor > 6) { guide.classList.add('small'); guide.classList.remove('hide'); guide.querySelector('.txt').innerHTML = '继续绕圈画，世界会接着走'; } }
+    requestAnimationFrame(watch);
+  })();
+  if (params.has('auto')) guide.classList.add('hide');
+}
+
 if (deviceMode) {
   const tip = document.createElement('div');
   tip.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99;padding:28px 36px;border-radius:18px;'

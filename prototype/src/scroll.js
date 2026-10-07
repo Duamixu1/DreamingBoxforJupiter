@@ -125,6 +125,46 @@ export async function createScrollWorld(world, baseUrl, renderer) {
     scene.add(g); groups.push(g);
   }
 
+  // —— 氛围粒子：按风格飘花瓣 / 流云 / 方块闪光。位置只由 worldTime 算出：停摇即停 ——
+  const drift = (() => {
+    const kind = { mucha: 'petal', chibi: 'petal', shanhai: 'mist', pixel: 'spark' }[world.style] ?? 'petal';
+    const color = { mucha: '#e8a39a', chibi: '#f7a8bc', shanhai: '#ffffff', pixel: '#ffd36b' }[world.style] ?? '#e8a39a';
+    const n = kind === 'mist' ? 26 : 60;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(n * 3), 3));
+    // 花瓣：实心的椭圆花瓣（边缘只柔 2px），轮廓清楚；流云用柔边光斑
+    const petal = (() => {
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const g = c.getContext('2d'); g.filter = 'blur(1.5px)'; g.fillStyle = '#fff';
+      g.translate(32, 32); g.rotate(-0.6); g.beginPath(); g.ellipse(0, 0, 26, 15, 0, 0, Math.PI * 2); g.fill();
+      g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(24, 0, 7, 0, Math.PI * 2); g.fill(); // 花瓣尖上的小缺口
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    })();
+    const mat = new THREE.PointsMaterial({ color, size: kind === 'mist' ? 12 : kind === 'spark' ? 1.1 : 1.3,
+      map: kind === 'spark' ? null : kind === 'mist' ? radialTexture() : petal, alphaTest: kind === 'petal' ? 0.2 : 0, transparent: true, opacity: kind === 'mist' ? 0.35 : 0.9, depthWrite: false,
+      blending: kind === 'spark' ? AdditiveBlending : THREE.NormalBlending });
+    const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 50;
+    scene.add(pts);
+    const seeds = Array.from({ length: n }, (_, k) => [Math.sin(k * 12.9898) * 43758.5453 % 1, Math.sin(k * 78.233) * 12345.678 % 1, Math.sin(k * 3.7) * 999.1 % 1].map((v) => Math.abs(v)));
+    const W = PANEL * 1.3, H = STATION_PX[1] * PX * 1.1;
+    return {
+      update(wt, cx) {
+        const p = geo.attributes.position;
+        seeds.forEach(([a, b, c], k) => {
+          const z = kind === 'mist' ? -2 - c * 3 : -1.5 + c * 4;     // 花瓣有的在画前、有的在画后，视差最明显
+          let x, y;
+          if (kind === 'mist') { x = ((a * W + wt * 0.25 * (0.5 + c)) % W) - W / 2; y = -H * 0.15 + b * H * 0.35 + Math.sin(wt * 0.3 + k) * 0.3; }
+          else if (kind === 'spark') { x = (a - 0.5) * W; y = (b - 0.5) * H + Math.sin(wt * 0.8 + k) * 0.2; }
+          else { const fall = wt * (0.35 + 0.25 * c); x = ((a * W + fall * 0.6 + Math.sin(wt * 0.9 + k) * 0.4) % W) - W / 2; y = H / 2 - ((b * H + fall) % H); }
+          // 粒子跟着镜头所在的位置铺（循环），不用为整卷长度铺满
+          p.setXYZ(k, cx + x, y, z);
+        });
+        p.needsUpdate = true;
+        if (kind === 'spark') mat.opacity = 0.55 + 0.4 * Math.abs(Math.sin(wt * 2.1));
+      },
+    };
+  })();
+
   // —— 纪念品 ——
   const sx = N * PANEL;
   const souvenir = new Group(); scene.add(souvenir);
@@ -176,8 +216,11 @@ export async function createScrollWorld(world, baseUrl, renderer) {
     const i = Math.min(Math.floor(s), N);
     const lu = s - i;
     current = Math.min(i, N - 1);
-    const pan = i < N ? ease(seg(lu, 0.8, 1)) : 0;
-    const camX = view ? view.x : (i + pan) * PANEL;
+    // 镜头一直在动：停在一站时也随摇动缓慢向右漂（−4% → +4% 屏宽），后 20% 平移到下一站，画卷展开的感觉更连贯
+    const DRIFT = 0.04;
+    const f = i >= N ? 0 : lu < 0.8 ? -DRIFT + 2 * DRIFT * (lu / 0.8) : DRIFT + (1 - 2 * DRIFT) * ease(seg(lu, 0.8, 1));
+    const camX = view ? view.x : (i + f) * PANEL;
+    drift.update(wt, camX);
     groups.forEach((g, k) => { g.visible = Math.abs(camX - k * PANEL) < PANEL * 1.4; });
 
     for (const a of animated) {

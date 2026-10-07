@@ -517,8 +517,11 @@ function step6() {
     w.status = 'ready';  // 之后的保存不要把状态改回草稿
     const host = /^(localhost|127\.)/.test(location.hostname) ? (r.lan ?? '<电脑的局域网 IP>') : location.hostname;
     const done = $('#done'); done.hidden = false;
-    done.innerHTML = `<b>完成！礼物编号 ${r.id}</b><p>在 Jupiter 相框的浏览器里打开：</p><code>http://${host}:${location.port}${r.device}</code>
-      <p class="hint">打开后轻点屏幕进入全屏；相框和这台电脑要在同一个 Wi-Fi 下。想自动播放一遍，在地址末尾加 <b>&amp;auto</b>。</p>`;
+    const url = `http://${host}:${location.port}${r.device}`;
+    done.innerHTML = `<b>完成！礼物编号 ${r.id}</b><p>在 Jupiter 相框的浏览器里打开（相框和这台电脑要在同一个 Wi-Fi 下）：</p>
+      <p class="hint">手摇（接了摇柄，或用手指绕屏幕画圈）</p><code>${url}</code>
+      <p class="hint">自动播放一遍（没有摇柄时演示用）</p><code>${url}&amp;auto</code>
+      <p class="hint">打开后轻点一下屏幕进入全屏，裸眼 3D 才会出来。</p>`;
   };
   pollSlots();
 }

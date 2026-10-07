@@ -482,7 +482,7 @@ function step6() {
   // 纪念品：前面做好的元素，或单独生成
   const sel = $('#souv');
   if (w.demo) {
-    const opts = [{ v: 'assets/models/demo_souvenir.glb', n: '灯塔音乐盒（案例纪念品）' }, ...w.stations.flatMap((st) => (st.elements ?? []).map((e) => ({ v: e.demo.model, n: `${st.title} · ${e.name}` })))];
+    const opts = [{ v: 'assets/models/demo_souvenir.glb', n: '灯塔音乐盒（案例纪念品）' }, ...w.stations.flatMap((st) => (st.elements ?? []).map((e) => ({ v: demoOf(e).model, n: `${st.title} · ${e.name}` })))];
     sel.innerHTML = '<option value="">（不要纪念品）</option>' + opts.map((o) => `<option value="${o.v}">${o.n}</option>`).join('');
     sel.value = w.souvenir.model ?? '';
     sel.onchange = () => { w.souvenir.model = sel.value || null; save(); $('#pv-p').value = 990; };
@@ -552,16 +552,27 @@ async function demoPaint(list) {
     const L = st.layers.find((x) => x.id === 'art');
     Object.assign(L, { src, fit: 'cover', x: 0, y: 0 }); delete L.w; delete L.h;
     if (!st.versions.includes(src)) st.versions.push(src);
-    for (const M of st.layers) if (M.kind === 'model') delete M.hidden;   // 立体元素跟着画好的这一站一起出现
+    applyDemoElements(st, w.style);   // 立体元素换成这个风格的版本，跟着画好的这一站一起出现
     set({ stage: '完成', progress: 100, done: true });
     save(); pv.show(i);
+  }
+}
+// 案例里每个元素按风格各有一套：参考图、模型、在画里的位置（world.json 的 elements[].demo[风格]）
+const demoOf = (el, style = state.world.style) => el.demo?.[style] ?? el.demo?.mucha;
+function applyDemoElements(st, style) {
+  for (const el of st.elements ?? []) {
+    const d = demoOf(el, style); if (!d) continue;
+    const L = st.layers.find((x) => x.id === el.id); if (!L) continue;
+    Object.assign(L, { src: d.model, x: d.x, y: d.y, h: d.h, ry: d.ry ?? 0 }); delete L.hidden;
+    el.rect = d.rect;
   }
 }
 let demoGateResolve = null;
 async function demoGenerate(st, el) {
   if (!el.demo) { alert('案例模式下，新框的元素不会真的生成（会消耗 Tripo 额度）。可以对已有的三个元素点「重新生成 3D」看一遍过程，或者回到首页自己做一卷。'); return; }
   const w = state.world;
-  const job = { demo: true, job: { done: false, updated: Date.now(), artifacts: { source: el.demo.crop } } };
+  const d = demoOf(el);
+  const job = { demo: true, job: { done: false, updated: Date.now(), artifacts: { source: d.crop } } };
   demo.slots[el.id] = job;
   const set = (j) => { Object.assign(job.job, j, { updated: Date.now() }); paintElements(); };
   const L = st.layers.find((x) => x.id === el.id);
@@ -569,7 +580,7 @@ async function demoGenerate(st, el) {
   rebuildPreview();
   while (true) {
     await animate(set, '重画成给 3D 看的参考图', 2400);
-    job.job.artifacts.reference = el.demo.ref;
+    job.job.artifacts.reference = d.ref;
     set({ stage: '等你确认参考图', progress: null, waiting: 'reference' });
     const ans = await new Promise((ok) => { demoGateResolve = ok; });
     set({ waiting: null });
@@ -578,7 +589,7 @@ async function demoGenerate(st, el) {
   }
   await animate(set, 'Tripo 建模', 3200, 16);
   await animate(set, '减面、烘贴图（适配相框）', 1200, 6);
-  if (L) delete L.hidden;
+  applyDemoElements(st, w.style);
   set({ stage: '完成', done: true, message: '已放回画里同一个位置' });
   save(); pv.show(w.stations.indexOf(st));
 }

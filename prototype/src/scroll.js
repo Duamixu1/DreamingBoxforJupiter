@@ -77,6 +77,11 @@ export async function createScrollWorld(world, baseUrl, renderer) {
         const k = Math[L.fit === 'cover' ? 'max' : 'min'](STATION_PX[0] / tex.image.width, STATION_PX[1] / tex.image.height) * (L.zoom ?? 1);
         w = tex.image.width * k; h = tex.image.height * k;
         L = { ...L, x: (STATION_PX[0] - w) / 2 + (L.dx ?? 0), y: (STATION_PX[1] - h) / 2 + (L.dy ?? 0) };
+        // 铺满时图常比一屏宽：裁到正好一屏宽，免得越过站界、和相邻一站的画叠在一起
+        if (L.fit === 'cover' && w > STATION_PX[0]) {
+          tex.repeat.x = STATION_PX[0] / w; tex.offset.x = -L.x / w;
+          L.x = 0; w = STATION_PX[0];
+        }
       }
       const [x, y, s] = place(cx, L.x + w / 2, L.y + h / 2, d);
       const m = cardFor(tex, w * PX * s, h * PX * s);

@@ -36,7 +36,7 @@
      "fit": "cover",
      "x": 0,
      "y": 0,
-     "depth": -1.5
+     "depth": -0.8
     },
     {
      "id": "lighthouse",
@@ -44,8 +44,8 @@
      "src": "assets/models/demo_lighthouse.glb",
      "x": 768.0,
      "y": 775,
-     "h": 418,
-     "depth": 0.6,
+     "h": 460,
+     "depth": 0.0,
      "anim": "sway",
      "ry": 0,
      "hidden": true
@@ -64,9 +64,66 @@
      ],
      "model": 1,
      "demo": {
-      "crop": "../demo-case/el-lighthouse-crop.webp",
-      "ref": "../demo-case/el-lighthouse-ref.webp",
-      "model": "assets/models/demo_lighthouse.glb"
+      "mucha": {
+       "crop": "../demo-case/el-lighthouse-crop.webp",
+       "ref": "../demo-case/el-lighthouse-ref.webp",
+       "model": "assets/models/demo_lighthouse.glb",
+       "x": 768.0,
+       "y": 775,
+       "h": 460,
+       "ry": 0,
+       "rect": [
+        600,
+        357,
+        336,
+        418
+       ]
+      },
+      "shanhai": {
+       "crop": "../demo-case/el-lighthouse-shanhai-crop.webp",
+       "ref": "../demo-case/el-lighthouse-shanhai-ref.webp",
+       "model": "assets/models/demo_lighthouse_shanhai.glb",
+       "x": 888,
+       "y": 940,
+       "h": 447,
+       "ry": 0,
+       "rect": [
+        720,
+        534,
+        336,
+        406
+       ]
+      },
+      "pixel": {
+       "crop": "../demo-case/el-lighthouse-pixel-crop.webp",
+       "ref": "../demo-case/el-lighthouse-pixel-ref.webp",
+       "model": "assets/models/demo_lighthouse_pixel.glb",
+       "x": 864,
+       "y": 922,
+       "h": 338,
+       "ry": 0,
+       "rect": [
+        696,
+        614,
+        336,
+        307
+       ]
+      },
+      "chibi": {
+       "crop": "../demo-case/el-lighthouse-chibi-crop.webp",
+       "ref": "../demo-case/el-lighthouse-chibi-ref.webp",
+       "model": "assets/models/demo_lighthouse_chibi.glb",
+       "x": 849,
+       "y": 941,
+       "h": 381,
+       "ry": -1.5708,
+       "rect": [
+        675,
+        595,
+        348,
+        346
+       ]
+      }
      }
     }
    ]
@@ -96,7 +153,7 @@
      "fit": "cover",
      "x": 0,
      "y": 0,
-     "depth": -1.5
+     "depth": -0.8
     },
     {
      "id": "cottage",
@@ -104,8 +161,8 @@
      "src": "assets/models/demo_cottage.glb",
      "x": 612.0,
      "y": 1330,
-     "h": 720,
-     "depth": 0.8,
+     "h": 792,
+     "depth": 0.2,
      "anim": "sway",
      "ry": 0,
      "hidden": true
@@ -124,9 +181,66 @@
      ],
      "model": 1,
      "demo": {
-      "crop": "../demo-case/el-cottage-crop.webp",
-      "ref": "../demo-case/el-cottage-ref.webp",
-      "model": "assets/models/demo_cottage.glb"
+      "mucha": {
+       "crop": "../demo-case/el-cottage-crop.webp",
+       "ref": "../demo-case/el-cottage-ref.webp",
+       "model": "assets/models/demo_cottage.glb",
+       "x": 612.0,
+       "y": 1330,
+       "h": 792,
+       "ry": 0,
+       "rect": [
+        192,
+        717,
+        840,
+        568
+       ]
+      },
+      "shanhai": {
+       "crop": "../demo-case/el-cottage-shanhai-crop.webp",
+       "ref": "../demo-case/el-cottage-shanhai-ref.webp",
+       "model": "assets/models/demo_cottage_shanhai.glb",
+       "x": 693,
+       "y": 1248,
+       "h": 659,
+       "ry": -1.5708,
+       "rect": [
+        169,
+        749,
+        1050,
+        499
+       ]
+      },
+      "pixel": {
+       "crop": "../demo-case/el-cottage-pixel-crop.webp",
+       "ref": "../demo-case/el-cottage-pixel-ref.webp",
+       "model": "assets/models/demo_cottage_pixel.glb",
+       "x": 587,
+       "y": 1248,
+       "h": 659,
+       "ry": -1.5708,
+       "rect": [
+        123,
+        749,
+        930,
+        499
+       ]
+      },
+      "chibi": {
+       "crop": "../demo-case/el-cottage-chibi-crop.webp",
+       "ref": "../demo-case/el-cottage-chibi-ref.webp",
+       "model": "assets/models/demo_cottage_chibi.glb",
+       "x": 564,
+       "y": 1225,
+       "h": 502,
+       "ry": 0,
+       "rect": [
+        120,
+        737,
+        888,
+        528
+       ]
+      }
      }
     }
    ]
@@ -156,7 +270,7 @@
      "fit": "cover",
      "x": 0,
      "y": 0,
-     "depth": -1.5
+     "depth": -0.8
     },
     {
      "id": "bench",
@@ -164,10 +278,10 @@
      "src": "assets/models/demo_bench.glb",
      "x": 540.0,
      "y": 1895,
-     "h": 650,
-     "depth": 1.4,
+     "h": 715,
+     "depth": 0.5,
      "anim": "breathe",
-     "ry": -0.75,
+     "ry": -1.5708,
      "hidden": true
     }
    ],
@@ -184,9 +298,66 @@
      ],
      "model": 1,
      "demo": {
-      "crop": "../demo-case/el-bench-crop.webp",
-      "ref": "../demo-case/el-bench-ref.webp",
-      "model": "assets/models/demo_bench.glb"
+      "mucha": {
+       "crop": "../demo-case/el-bench-crop.webp",
+       "ref": "../demo-case/el-bench-ref.webp",
+       "model": "assets/models/demo_bench.glb",
+       "x": 540.0,
+       "y": 1895,
+       "h": 715,
+       "ry": -1.5708,
+       "rect": [
+        216,
+        1245,
+        648,
+        650
+       ]
+      },
+      "shanhai": {
+       "crop": "../demo-case/el-bench-shanhai-crop.webp",
+       "ref": "../demo-case/el-bench-shanhai-ref.webp",
+       "model": "assets/models/demo_bench_shanhai.glb",
+       "x": 454,
+       "y": 1843,
+       "h": 486,
+       "ry": -1.5708,
+       "rect": [
+        130,
+        1402,
+        647,
+        442
+       ]
+      },
+      "pixel": {
+       "crop": "../demo-case/el-bench-pixel-crop.webp",
+       "ref": "../demo-case/el-bench-pixel-ref.webp",
+       "model": "assets/models/demo_bench_pixel.glb",
+       "x": 768,
+       "y": 1772,
+       "h": 595,
+       "ry": -1.5708,
+       "rect": [
+        336,
+        1231,
+        864,
+        541
+       ]
+      },
+      "chibi": {
+       "crop": "../demo-case/el-bench-chibi-crop.webp",
+       "ref": "../demo-case/el-bench-chibi-ref.webp",
+       "model": "assets/models/demo_bench_chibi.glb",
+       "x": 492,
+       "y": 1833,
+       "h": 670,
+       "ry": -1.5708,
+       "rect": [
+        96,
+        1224,
+        792,
+        609
+       ]
+      }
      }
     }
    ]

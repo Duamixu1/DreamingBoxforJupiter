@@ -1,6 +1,6 @@
 # 世界（world.json）
 
-用户在 `/create` 做的每一卷音乐长卷存在 `prototype/worlds/<编号>/`（不进仓库，含个人照片），相框用 `/device?world=<编号>` 载入。`sample-mucha/` 是手写的样例，用穆夏《一日四时》的素材拼成，可以直接打开 `/device?world=sample-mucha` 看效果。
+用户在 `/create` 做的每一卷音乐长卷存在 `prototype/worlds/<编号>/`（不进仓库，含个人照片），相框用 `/device?world=<编号>` 载入。`demo-case/` 是给评委的案例模板（《我们一起走过的地方》：3 张照片 × 4 种风格的长卷，3 个立体元素 × 4 种风格的模型，1 件纪念品，全部用 Tripo 实际生成；网页里「直接体验案例」会复制一份，重画 / 生成 3D 时按当前风格换上对应素材）。`sample-mucha/` 是手写的样例，用穆夏《一日四时》的素材拼成，可以直接打开 `/device?world=sample-mucha` 看效果。
 
 渲染器：[../src/scroll.js](../src/scroll.js)。网页预览和相框是同一份代码。
 

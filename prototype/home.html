@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>梦境盒 DreamingBox · 把心动的瞬间收进音乐世界</title>
+<meta name="description" content="上传一张珍贵的照片，选一种画风，做成一卷会唱歌的音乐长卷，放进 Jupiter 裸眼 3D 木盒里，转动摇柄慢慢展开。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l2.6 10.4L29 16l-10.4 2.6L16 29l-2.6-10.4L3 16l10.4-2.6z' fill='%23a5773e'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f5efe4; --paper-2: #fbf8f2; --card: #fffdf9;
+    --ink: #2f2820; --ink-2: #5d5245; --dim: #6f6354;   /* --dim 在 --paper 上对比度约 5:1 */
+    --line: #e2d7c5; --gold: #a5773e; --gold-2: #c9a55a;
+    --forest: #3a3f33; --forest-ink: #f3ecdf;
+    --radius: 14px; --shadow: 0 18px 40px -18px #3b2a1a55;
+    --serif-en: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+    --serif-zh: "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", serif;
+    --sans: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.7 var(--sans); -webkit-font-smoothing: antialiased; }
+  body::before { /* 纸张底纹：极淡的径向光，不用图片 */
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1;
+    background: radial-gradient(1200px 700px at 78% 20%, #fff8ec 0%, transparent 60%), radial-gradient(900px 600px at 0% 100%, #efe4d2 0%, transparent 60%);
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .skip { position: absolute; left: -999px; top: 8px; background: var(--ink); color: #fff; padding: 8px 12px; border-radius: 8px; z-index: 10; }
+  .skip:focus { left: 12px; }
+
+  /* —— 顶栏 —— */
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+  .logo { display: flex; align-items: baseline; gap: 10px; text-decoration: none; }
+  .logo b { font: 600 26px/1 var(--serif-en); letter-spacing: .01em; }
+  .logo span { font-size: 12px; letter-spacing: .24em; color: var(--dim); text-transform: uppercase; }
+  nav.links { display: flex; gap: 22px; font-size: 14px; }
+  nav.links a { text-decoration: none; color: var(--ink-2); padding: 4px 0; border-bottom: 1px solid transparent; }
+  nav.links a:hover { color: var(--ink); border-color: var(--gold-2); }
+
+  /* —— 首屏 —— */
+  .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; padding: 56px 0 72px; }
+  .eyebrow { font-size: 12px; letter-spacing: .26em; color: var(--gold); text-transform: uppercase; margin: 0 0 18px; }
+  h1 { margin: 0; font: 500 clamp(44px, 5.4vw, 72px)/1.04 var(--serif-en); letter-spacing: -.01em; }
+  h1 em { color: var(--gold); font-style: italic; }
+  .zh-title { font: 600 clamp(22px, 2.2vw, 28px)/1.5 var(--serif-zh); margin: 18px 0 14px; letter-spacing: .04em; }
+  .lead { color: var(--ink-2); max-width: 30em; margin: 0 0 30px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px; border-radius: 999px; font: 600 16px/1 var(--sans); text-decoration: none; border: 1px solid transparent; transition: transform .15s, box-shadow .15s, background .15s; cursor: pointer; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.primary { background: var(--forest); color: var(--forest-ink); box-shadow: var(--shadow); }
+  .btn.primary:hover { background: #2c3127; }
+  .btn.ghost { background: var(--card); border-color: var(--line); color: var(--ink); }
+  .btn.ghost:hover { border-color: var(--gold-2); }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+  .meta { margin-top: 22px; font-size: 13px; color: var(--dim); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .meta span::before { content: "✦"; color: var(--gold-2); margin-right: 6px; font-size: 10px; vertical-align: 2px; }
+
+  /* 首屏右侧：一张照片 → 四种画风（真实生成的案例） */
+  .showcase { position: relative; display: grid; justify-items: center; }
+  .halo { position: absolute; width: 112%; aspect-ratio: 1; border-radius: 50%; border: 1px solid #d9c9ad; top: 50%; left: 50%; transform: translate(-50%, -54%); pointer-events: none; }
+  .frame { position: relative; width: min(360px, 78vw); aspect-ratio: 10 / 16; padding: 14px; border-radius: 200px 200px 18px 18px; background: linear-gradient(140deg, #6e4c33, #3d2a1b); box-shadow: 0 30px 60px -24px #2b1a0d88, inset 0 0 0 1px #ffffff1a; }
+  .frame .glass { position: relative; width: 100%; height: 100%; border-radius: 188px 188px 8px 8px; overflow: hidden; background: #1a1410; }
+  .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .5s ease; }
+  .frame img.out { opacity: 0; }
+  .frame .label { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; background: #1a1410b8; color: #fbf3e2; font-size: 13px; font-weight: 600; letter-spacing: .06em; white-space: nowrap; backdrop-filter: blur(4px); }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; position: relative; }
+  .chip { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2); font: 500 14px/1 var(--sans); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper-2); border-color: var(--ink); }
+  .chip:hover { border-color: var(--gold-2); }
+  .cap { margin: 10px 0 0; font-size: 12px; color: var(--dim); text-align: center; position: relative; }
+
+  /* —— 分节 —— */
+  section.block { padding: 72px 0; border-top: 1px solid var(--line); }
+  .head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 36px; flex-wrap: wrap; }
+  h2 { margin: 0; font: 600 clamp(26px, 2.6vw, 34px)/1.3 var(--serif-zh); letter-spacing: .03em; }
+  h2 small { display: block; font: italic 500 18px/1.4 var(--serif-en); color: var(--gold); letter-spacing: 0; margin-bottom: 6px; }
+  .head p { margin: 0; color: var(--ink-2); max-width: 34em; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  .steps li { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 22px; }
+  .steps li::before { counter-increment: s; content: "0" counter(s); display: block; font: 600 30px/1 var(--serif-en); color: var(--gold-2); margin-bottom: 14px; }
+  .steps h3 { margin: 0 0 6px; font-size: 18px; }
+  .steps p { margin: 0; color: var(--ink-2); font-size: 15px; }
+
+  .styles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .style { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .style img { display: block; width: 100%; aspect-ratio: 5 / 7; object-fit: cover; }
+  .style figcaption { padding: 12px 14px 16px; }
+  .style b { display: block; font-size: 16px; }
+  .style span { color: var(--dim); font-size: 13px; }
+
+  /* —— 两个入口 —— */
+  .doors { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .door { position: relative; display: flex; flex-direction: column; gap: 10px; min-height: 230px; padding: 28px; border-radius: 18px; text-decoration: none; border: 1px solid var(--line); background: var(--card); transition: transform .2s, box-shadow .2s, border-color .2s; }
+  .door:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--gold-2); }
+  .door.main { background: var(--forest); color: var(--forest-ink); border-color: var(--forest); }
+  .door .k { font-size: 12px; letter-spacing: .24em; text-transform: uppercase; opacity: .75; }
+  .door h3 { margin: 0; font: 500 32px/1.15 var(--serif-en); }
+  .door h3 span { display: block; font: 600 20px/1.5 var(--serif-zh); margin-top: 6px; }
+  .door p { margin: 0; opacity: .85; font-size: 15px; max-width: 30em; }
+  .door .go { margin-top: auto; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+  .door .go svg { width: 18px; height: 18px; transition: transform .2s; }
+  .door:hover .go svg { transform: translateX(4px); }
+  .door .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+  .door.main .btn.ghost { background: transparent; color: var(--forest-ink); border-color: #f3ecdf55; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--dim); }
+  footer a { color: var(--ink-2); }
+  .sparkle { position: absolute; color: var(--gold-2); font-size: 28px; top: 8%; left: 4%; animation: twinkle 4s ease-in-out infinite; }
+  @keyframes twinkle { 50% { opacity: .35; transform: scale(.85) rotate(20deg); } }
+
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 36px; }
+    .showcase { order: -1; }
+    .steps { grid-template-columns: 1fr; }
+    .styles { grid-template-columns: repeat(2, 1fr); }
+    .doors { grid-template-columns: 1fr; }
+    nav.links { display: none; }
+  }
+  @media (max-width: 520px) {
+    .wrap { padding: 0 18px; }
+    .btn { width: 100%; justify-content: center; }
+    .halo { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到主要内容</a>
+<div class="wrap">
+  <header class="top">
+    <a class="logo" href="/" aria-label="梦境盒 DreamingBox 首页"><b>DreamingBox</b><span>梦境盒 · for Jupiter</span></a>
+    <nav class="links" aria-label="页面导航">
+      <a href="#how">怎么做</a><a href="#styles">画风</a><a href="#start">开始</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="h1">
+      <div>
+        <p class="eyebrow">A moment · A world · A melody</p>
+        <h1 id="h1">Turn a moment<br>into a little <em>wonder</em>.</h1>
+        <p class="zh-title">把心动的瞬间，收藏进音乐世界。</p>
+        <p class="lead">上传一张珍贵的照片——旅行里的海边、书里电影里的一幕都可以。选一种画风，它会被画成一卷会唱歌的长卷，放进 Jupiter 裸眼 3D 木盒。转动摇柄，世界慢慢展开；摇到尽头，是一件只属于这段回忆的纪念品。</p>
+        <div class="cta">
+          <a class="btn primary" href="/create/">
+            开始创作
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn ghost" href="/create/?demo=1">先看一个案例</a>
+        </div>
+        <p class="meta"><span>无需注册</span><span>约 10 分钟做完</span><span>案例不消耗额度</span></p>
+      </div>
+
+      <div class="showcase">
+        <div class="halo" aria-hidden="true"></div>
+        <span class="sparkle" aria-hidden="true">✦</span>
+        <div class="frame">
+          <div class="glass" id="glass">
+            <img id="pic" src="/worlds/demo-case/art-0-mucha.webp" alt="海边灯塔，穆夏新艺术画风">
+            <div class="label" id="label">穆夏新艺术 · 海边的灯塔</div>
+          </div>
+        </div>
+        <div class="chips" role="group" aria-label="切换画风">
+          <button class="chip" data-k="photo" aria-pressed="false">原照片</button>
+          <button class="chip" data-k="mucha" aria-pressed="true">穆夏</button>
+          <button class="chip" data-k="shanhai" aria-pressed="false">山海经</button>
+          <button class="chip" data-k="pixel" aria-pressed="false">像素</button>
+          <button class="chip" data-k="chibi" aria-pressed="false">Q 版</button>
+        </div>
+        <p class="cap">同一张照片的四种画法（案例素材均由 Tripo 实际生成）</p>
+      </div>
+    </section>
+
+    <section class="block" id="how" aria-labelledby="how-h">
+      <div class="head">
+        <h2 id="how-h"><small>How it works</small>三步，做一卷音乐长卷</h2>
+        <p>每张照片是长卷里的一站，从左到右展开。木盒的屏幕竖着放（135 × 217 mm），像一扇窗，随着摇柄沿着长卷向前走。</p>
+      </div>
+      <ol class="steps">
+        <li><h3>选照片，写一句话</h3><p>1–5 张照片，按顺序排好；写下想送给谁、想记住什么。</p></li>
+        <li><h3>选画风，让它立起来</h3><p>照片被重画成你选的风格；在画上框出灯塔、小屋、长椅，它们会变成真正的 3D 小物，停在原来的位置。</p></li>
+        <li><h3>配一首曲，送进木盒</h3><p>四首原创音乐盒曲任选，长卷尽头放一件纪念品和一句话。完成后会得到一个专属地址，在相框上打开就能播放。</p></li>
+      </ol>
+    </section>
+
+    <section class="block" id="styles" aria-labelledby="styles-h">
+      <div class="head">
+        <h2 id="styles-h"><small>Four ways to dream</small>四种画风</h2>
+        <p>不是滤镜，而是按照每一种画法重新画一遍：线条、配色、构图都换成那个世界的样子。</p>
+      </div>
+      <div class="styles">
+        <figure class="style"><img src="/worlds/demo-case/art-1-mucha.webp" alt="山间小屋，穆夏新艺术画风" loading="lazy"><figcaption><b>穆夏新艺术</b><span>花卉、流动的线条、拱窗 · 配乐《晨光圆舞曲》</span></figcaption></figure>
+        <figure class="style"><img src="/worlds/demo-case/art-1-shanhai.webp" alt="山间小屋，山海经工笔画风" loading="lazy"><figcaption><b>山海经工笔</b><span>青绿山水、祥云、灵兽 · 配乐《云山谣》</span></figcaption></figure>
+        <figure class="style"><img src="/worlds/demo-case/art-1-pixel.webp" alt="山间小屋，像素画风" loading="lazy"><figcaption><b>像素</b><span>16 色、硬边、小小的场景 · 配乐《像素小进行曲》</span></figcaption></figure>
+        <figure class="style"><img src="/worlds/demo-case/art-1-chibi.webp" alt="山间小屋，Q 版画风" loading="lazy"><figcaption><b>Q 版原图</b><span>可爱圆润，保留原色 · 配乐《小小摇篮曲》</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="start" aria-labelledby="start-h">
+      <div class="head">
+        <h2 id="start-h"><small>Begin</small>从这里开始</h2>
+      </div>
+      <div class="doors">
+        <div class="door main">
+          <span class="k">01 · Create</span>
+          <h3>Make your music world<span>做我的音乐长卷</span></h3>
+          <p>从照片开始，选画风、立起元素、配曲、留下纪念品，一步步完成，右侧随时能看到木盒里的样子。</p>
+          <div class="row">
+            <a class="btn" style="background:var(--forest-ink);color:var(--forest)" href="/create/">开始创作 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="btn ghost" href="/create/?demo=1">体验案例《我们一起走过的地方》</a>
+          </div>
+        </div>
+        <a class="door" href="/studio">
+          <span class="k">02 · Studio</span>
+          <h3>Step into the studio<span>进入工作台</span></h3>
+          <p>给创作者的精修工具：按 Jupiter 屏幕尺寸排版原画、拆分元素、检查 3D 分层与生成进度。以穆夏《一日四时》为例。</p>
+          <span class="go">打开工作台 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>DreamingBox · A creation by Gift Duo · Tripothon Jupiter SR</span>
+    <span><a href="/index.html?open">木盒桌面预览</a> · <a href="/device?world=sample-mucha">相框样例</a> · 穆夏原画为公有领域作品</span>
+  </footer>
+</div>
+
+<script>
+  // 首屏：同一张照片切换画风。自动轮播；用户点过之后停在所选风格
+  const SETS = {
+    photo: ['/worlds/demo-case/photo-0.webp', '原照片'],
+    mucha: ['/worlds/demo-case/art-0-mucha.webp', '穆夏新艺术'],
+    shanhai: ['/worlds/demo-case/art-0-shanhai.webp', '山海经工笔'],
+    pixel: ['/worlds/demo-case/art-0-pixel.webp', '像素'],
+    chibi: ['/worlds/demo-case/art-0-chibi.webp', 'Q 版原图'],
+  };
+  Object.values(SETS).forEach(([src]) => { const i = new Image(); i.src = src; });
+  const pic = document.getElementById('pic'), label = document.getElementById('label');
+  const chips = [...document.querySelectorAll('.chip')];
+  let cur = 'mucha', auto = !matchMedia('(prefers-reduced-motion: reduce)').matches, timer;
+  function show(k) {
+    if (k === cur) return;
+    cur = k;
+    const [src, name] = SETS[k];
+    pic.classList.add('out');
+    setTimeout(() => { pic.src = src; pic.alt = `海边灯塔，${name}`; pic.onload = () => pic.classList.remove('out'); }, 250);
+    label.textContent = `${name} · 海边的灯塔`;
+    chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.k === k)));
+  }
+  chips.forEach((c) => c.addEventListener('click', () => { auto = false; clearInterval(timer); show(c.dataset.k); }));
+  const order = Object.keys(SETS);
+  if (auto) timer = setInterval(() => show(order[(order.indexOf(cur) + 1) % order.length]), 3200);
+</script>
+</body>
+</html>

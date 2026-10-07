@@ -43,6 +43,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Location", "/?device&open" + ("&" + rest if rest and rest != "open" else ""))
             self.end_headers()
             return
+        if self.path in ("/", "/home"):  # 首页；木盒预览在 /index.html，相框用 /?device…（带参数不会进这里）
+            self.path = "/home.html"
         if self.path in ("/create", "/create/"):  # 用户网页
             self.send_response(302)
             self.send_header("Location", "/create/index.html")

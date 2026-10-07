@@ -616,4 +616,5 @@ async function demoSouvenir() {
     catch (e) { alert(`找不到这个世界：${e.message}`); }
   }
   go(state.world ? +(params.get('s') ?? 3) : 1);
+  if (!state.world && params.has('demo')) $('#demo-go')?.click();   // 首页「先看一个案例」直接进案例
 })();

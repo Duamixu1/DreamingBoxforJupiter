@@ -14,8 +14,10 @@ h2 { margin: 0 0 4px; font-size: 22px; }
 .hint { color: var(--dim); font-size: 12px; }
 
 .top { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 12px 24px; background: #fbf8f2ee; backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
-.brand { font-weight: 700; font-size: 18px; }
-.brand span { font-weight: 400; font-size: 13px; color: var(--dim); margin-left: 8px; }
+.brand { font: 600 22px/1 "Cormorant Garamond", Georgia, serif; color: var(--ink); text-decoration: none; }
+.brand:hover { color: var(--gold); }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.brand span { font: 400 13px/1 -apple-system, "PingFang SC", sans-serif; color: var(--dim); margin-left: 8px; }
 .steps { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; counter-reset: s; flex-wrap: wrap; }
 .steps li { counter-increment: s; padding: 4px 12px; border-radius: 99px; font-size: 13px; color: var(--dim); cursor: pointer; }
 .steps li::before { content: counter(s) " "; font-weight: 700; }

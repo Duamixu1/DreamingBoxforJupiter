@@ -49,6 +49,18 @@ export async function createScrollWorld(world, baseUrl, renderer) {
   };
 
   const animated = [];   // { obj, anim, base }
+  // 横向淡出的透明度贴图：两端 f（占宽度比例）渐变到 0
+  const featherCache = new Map();
+  const featherMap = (f) => {
+    if (!featherCache.has(f)) {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 1;
+      const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 256, 0);
+      gr.addColorStop(0, '#000'); gr.addColorStop(f, '#fff'); gr.addColorStop(1 - f, '#fff'); gr.addColorStop(1, '#000');
+      g.fillStyle = gr; g.fillRect(0, 0, 256, 1);
+      featherCache.set(f, new CanvasTexture(c));
+    }
+    return featherCache.get(f);
+  };
   const cardFor = (tex, w, h) => new Mesh(new PlaneGeometry(w, h), new MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: DoubleSide }));
 
   async function buildLayer(L, cx, order) { // eslint-disable-line no-param-reassign
@@ -72,7 +84,7 @@ export async function createScrollWorld(world, baseUrl, renderer) {
     if (L.kind === 'card') {
       const tex = await loadTex(L.src);
       if (!tex) return null;
-      let w = L.w ?? tex.image.width, h = L.h ?? tex.image.height;
+      let w = L.w ?? tex.image.width, h = L.h ?? (L.w ? L.w * tex.image.height / tex.image.width : tex.image.height);  // 只给宽：按图片比例算高
       if (L.fit === 'cover' || L.fit === 'contain') {   // 铺满 / 完整放进一站（重画出来的图尺寸不定）
         const k = Math[L.fit === 'cover' ? 'max' : 'min'](STATION_PX[0] / tex.image.width, STATION_PX[1] / tex.image.height) * (L.zoom ?? 1);
         w = tex.image.width * k; h = tex.image.height * k;
@@ -85,7 +97,10 @@ export async function createScrollWorld(world, baseUrl, renderer) {
       }
       const [x, y, s] = place(cx, L.x + w / 2, L.y + h / 2, d);
       const m = cardFor(tex, w * PX * s, h * PX * s);
-      m.position.set(x, y, d); m.renderOrder = d * 10 + order * 0.01;
+      if (L.feather) m.material.alphaMap = featherMap(L.feather);   // 左右边缘淡出，两站之间不是一条硬线
+      if (L.pivot === 'top') { m.geometry.translate(0, -h * PX * s / 2, 0); m.position.y += h * PX * s / 2; } // 垂枝：绕上沿摆
+      m.position.set(x, m.position.y || y, d); if (L.pivot !== 'top') m.position.y = y; else m.position.y = y + h * PX * s / 2;
+      m.renderOrder = d * 10 + order * 0.01;
       if (L.anim) animated.push({ obj: m, anim: L.anim, pos: m.position.clone(), rot: m.rotation.clone(), ph: order });
       return m;
     }
@@ -94,6 +109,11 @@ export async function createScrollWorld(world, baseUrl, renderer) {
       if (!src) return null;
       const g = new Group(), mdl = src.clone(true);
       mdl.traverse((o) => { if (o.isMesh) for (const mm of [].concat(o.material)) { mm.metalness = 0; mm.roughness = 1; } });
+      // Tripo 从平面图生成的东西常是一片薄板，且有时侧着：宽度远小于厚度时先转 90°，正面朝观众
+      if (L.autoFace !== false) {
+        const b0 = new Box3().setFromObject(mdl).getSize(new Vector3());
+        if (b0.x < b0.z * 0.6) { mdl.rotation.y += Math.PI / 2; mdl.updateMatrixWorld(true); }
+      }
       const box = new Box3().setFromObject(mdl), size = box.getSize(new Vector3()), c = box.getCenter(new Vector3());
       const [x, y, s] = place(cx, L.x, L.y, d);
       const k = (L.h * PX * s) / (size.y || 1);
@@ -129,7 +149,7 @@ export async function createScrollWorld(world, baseUrl, renderer) {
   const drift = (() => {
     const kind = { mucha: 'petal', chibi: 'petal', shanhai: 'mist', pixel: 'spark' }[world.style] ?? 'petal';
     const color = { mucha: '#e8a39a', chibi: '#f7a8bc', shanhai: '#ffffff', pixel: '#ffd36b' }[world.style] ?? '#e8a39a';
-    const n = kind === 'mist' ? 26 : 60;
+    const n = kind === 'mist' ? 26 : kind === 'spark' ? 34 : 60;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(n * 3), 3));
     // 花瓣：实心的椭圆花瓣（边缘只柔 2px），轮廓清楚；流云用柔边光斑
@@ -140,8 +160,8 @@ export async function createScrollWorld(world, baseUrl, renderer) {
       g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(24, 0, 7, 0, Math.PI * 2); g.fill(); // 花瓣尖上的小缺口
       const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
     })();
-    const mat = new THREE.PointsMaterial({ color, size: kind === 'mist' ? 12 : kind === 'spark' ? 1.1 : 1.3,
-      map: kind === 'spark' ? null : kind === 'mist' ? radialTexture() : petal, alphaTest: kind === 'petal' ? 0.2 : 0, transparent: true, opacity: kind === 'mist' ? 0.35 : 0.9, depthWrite: false,
+    const mat = new THREE.PointsMaterial({ color, size: kind === 'mist' ? 8 : kind === 'spark' ? 0.45 : 1.3,
+      map: kind === 'spark' ? null : kind === 'mist' ? radialTexture() : petal, alphaTest: kind === 'petal' ? 0.2 : 0, transparent: true, opacity: kind === 'mist' ? 0.16 : 0.9, depthWrite: false,
       blending: kind === 'spark' ? AdditiveBlending : THREE.NormalBlending });
     const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 50;
     scene.add(pts);
@@ -227,6 +247,15 @@ export async function createScrollWorld(world, baseUrl, renderer) {
       const t = wt + a.ph * 1.7;
       // 动作都很慢、幅度小：透镜屏上快速的小动作会糊
       if (a.anim === 'sway') a.obj.rotation.z = a.rot.z + Math.sin(t * 1.1) * 0.05;
+      else if (a.anim === 'flap') {    // 飞鸟贴片：滑翔 + 翅膀扇动（竖向轻压）
+        a.obj.position.x = a.pos.x + Math.sin(t * 0.32) * 1.2; a.obj.position.y = a.pos.y + Math.sin(t * 1.25) * 0.25;
+        a.obj.scale.y = 1 - 0.18 * Math.abs(Math.sin(t * 3.2)); a.obj.rotation.z = a.rot.z + Math.sin(t * 0.9) * 0.08;
+      } else if (a.anim === 'glide') {   // 飞鸟：大弧线滑翔、轻轻起伏和侧倾
+        a.obj.position.x = a.pos.x + Math.sin(t * 0.32) * 1.1; a.obj.position.y = a.pos.y + Math.sin(t * 1.25) * 0.22;
+        a.obj.rotation.z = a.rot.z + Math.sin(t * 0.9) * 0.12;
+      } else if (a.anim === 'walk') {  // 散步：一步一顿的轻微起伏、左右晃
+        a.obj.position.y = a.pos.y + Math.abs(Math.sin(t * 2.4)) * 0.05; a.obj.rotation.z = a.rot.z + Math.sin(t * 2.4) * 0.025;
+      }
       else if (a.anim === 'bob') a.obj.position.y = a.pos.y + Math.sin(t * 1.4) * 0.12;
       else if (a.anim === 'spin') a.obj.rotation.y = a.rot.y + t * 0.4;
       else if (a.anim === 'breathe') a.obj.scale.y = a.obj.scale.x * (1 + Math.sin(t * 1.6) * 0.012);

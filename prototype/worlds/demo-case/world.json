@@ -36,7 +36,8 @@
      "fit": "cover",
      "x": 0,
      "y": 0,
-     "depth": -0.8
+     "depth": -0.8,
+     "feather": 0.05
     },
     {
      "id": "lighthouse",
@@ -48,7 +49,124 @@
      "depth": 0.0,
      "anim": "sway",
      "ry": 0,
-     "hidden": true
+     "hidden": true,
+     "autoFace": false
+    },
+    {
+     "id": "sailboat",
+     "kind": "model",
+     "hidden": true,
+     "x": 290,
+     "y": 1080,
+     "h": 260,
+     "depth": -0.5,
+     "anim": "drift",
+     "ry": 0,
+     "variants": {
+      "mucha": {
+       "src": "assets/models/demo_sailboat_mucha.glb"
+      },
+      "shanhai": {
+       "src": "assets/models/demo_sailboat_shanhai.glb",
+       "y": 1200,
+       "h": 200
+      },
+      "pixel": {
+       "src": "assets/models/demo_sailboat_pixel.glb",
+       "h": 210
+      },
+      "chibi": {
+       "src": "assets/models/demo_sailboat_chibi.glb",
+       "y": 1150,
+       "h": 200,
+       "x": 260
+      }
+     }
+    },
+    {
+     "id": "gulls",
+     "kind": "card",
+     "hidden": true,
+     "x": 180,
+     "y": 420,
+     "w": 360,
+     "depth": 0.5,
+     "anim": "flap",
+     "variants": {
+      "mucha": {
+       "src": "../demo-case/gulls-mucha.webp"
+      },
+      "shanhai": {
+       "src": "../demo-case/gulls-shanhai.webp"
+      },
+      "pixel": {
+       "src": "../demo-case/gulls-pixel.webp"
+      },
+      "chibi": {
+       "src": "../demo-case/gulls-chibi.webp"
+      }
+     }
+    },
+    {
+     "id": "couple",
+     "kind": "model",
+     "hidden": true,
+     "x": 820,
+     "y": 1580,
+     "h": 437,
+     "depth": 0.9,
+     "anim": "walk",
+     "ry": 0,
+     "variants": {
+      "mucha": {
+       "src": "assets/models/demo_couple_mucha.glb",
+       "ry": 1.5708,
+       "autoFace": false,
+       "h": 400,
+       "x": 860
+      },
+      "shanhai": {
+       "src": "assets/models/demo_couple_shanhai.glb",
+       "ry": 1.5708,
+       "autoFace": false
+      },
+      "pixel": {
+       "src": "assets/models/demo_couple_pixel.glb",
+       "ry": 1.5708,
+       "autoFace": false
+      },
+      "chibi": {
+       "src": "assets/models/demo_couple_chibi.glb",
+       "ry": 1.5708,
+       "autoFace": false,
+       "h": 330,
+       "x": 840,
+       "y": 1600
+      }
+     }
+    },
+    {
+     "id": "fg",
+     "kind": "card",
+     "hidden": true,
+     "x": -80,
+     "y": 1560,
+     "w": 1360,
+     "depth": 1.6,
+     "variants": {
+      "mucha": {
+       "src": "../demo-case/fg-flowers-mucha.webp"
+      },
+      "shanhai": {
+       "src": "../demo-case/fg-flowers-shanhai.webp"
+      },
+      "pixel": {
+       "src": "../demo-case/fg-flowers-pixel.webp"
+      },
+      "chibi": {
+       "src": "../demo-case/fg-flowers-chibi.webp"
+      }
+     }
     }
    ],
    "elements": [
@@ -153,7 +271,8 @@
      "fit": "cover",
      "x": 0,
      "y": 0,
-     "depth": -0.8
+     "depth": -0.8,
+     "feather": 0.05
     },
     {
      "id": "cottage",
@@ -162,10 +281,136 @@
      "x": 612.0,
      "y": 1330,
      "h": 792,
-     "depth": 0.2,
+     "depth": -0.2,
      "anim": "sway",
      "ry": 0,
-     "hidden": true
+     "hidden": true,
+     "autoFace": false
+    },
+    {
+     "id": "tree",
+     "kind": "model",
+     "hidden": true,
+     "x": 1020,
+     "y": 1300,
+     "h": 820,
+     "depth": -0.5,
+     "anim": "sway",
+     "ry": 0,
+     "variants": {
+      "mucha": {
+       "src": "assets/models/demo_tree_mucha.glb",
+       "off": true
+      },
+      "shanhai": {
+       "src": "assets/models/demo_tree_shanhai.glb",
+       "off": true
+      },
+      "pixel": {
+       "src": "assets/models/demo_tree_pixel.glb",
+       "x": 1040,
+       "y": 1260,
+       "h": 560
+      },
+      "chibi": {
+       "src": "assets/models/demo_tree_chibi.glb",
+       "x": 1030,
+       "y": 1260,
+       "h": 640
+      }
+     }
+    },
+    {
+     "id": "birds",
+     "kind": "card",
+     "hidden": true,
+     "x": 900,
+     "y": 300,
+     "w": 300,
+     "depth": 0.4,
+     "anim": "flap",
+     "variants": {
+      "mucha": {
+       "src": "../demo-case/gulls-mucha.webp"
+      },
+      "shanhai": {
+       "src": "../demo-case/gulls-shanhai.webp"
+      },
+      "pixel": {
+       "src": "../demo-case/gulls-pixel.webp"
+      },
+      "chibi": {
+       "src": "../demo-case/gulls-chibi.webp"
+      }
+     }
+    },
+    {
+     "id": "couple",
+     "kind": "model",
+     "hidden": true,
+     "x": 770,
+     "y": 1780,
+     "h": 529,
+     "depth": 1.1,
+     "anim": "walk",
+     "ry": 0,
+     "variants": {
+      "mucha": {
+       "src": "assets/models/demo_couple_mucha.glb",
+       "ry": 1.5708,
+       "autoFace": false,
+       "x": 820,
+       "y": 1800,
+       "h": 440
+      },
+      "shanhai": {
+       "src": "assets/models/demo_couple_shanhai.glb",
+       "ry": 1.5708,
+       "autoFace": false,
+       "x": 820,
+       "y": 1800,
+       "h": 440
+      },
+      "pixel": {
+       "src": "assets/models/demo_couple_pixel.glb",
+       "ry": 1.5708,
+       "autoFace": false,
+       "x": 820,
+       "y": 1800,
+       "h": 440
+      },
+      "chibi": {
+       "src": "assets/models/demo_couple_chibi.glb",
+       "ry": 1.5708,
+       "autoFace": false,
+       "x": 820,
+       "y": 1780,
+       "h": 360
+      }
+     }
+    },
+    {
+     "id": "fg",
+     "kind": "card",
+     "hidden": true,
+     "x": -80,
+     "y": 1640,
+     "w": 1360,
+     "depth": 1.7,
+     "variants": {
+      "mucha": {
+       "src": "../demo-case/fg-grass-mucha.webp"
+      },
+      "shanhai": {
+       "src": "../demo-case/fg-grass-shanhai.webp"
+      },
+      "pixel": {
+       "src": "../demo-case/fg-grass-pixel.webp"
+      },
+      "chibi": {
+       "src": "../demo-case/fg-grass-chibi.webp"
+      }
+     }
     }
    ],
    "elements": [
@@ -185,9 +430,9 @@
        "crop": "../demo-case/el-cottage-crop.webp",
        "ref": "../demo-case/el-cottage-ref.webp",
        "model": "assets/models/demo_cottage.glb",
-       "x": 612.0,
-       "y": 1330,
-       "h": 792,
+       "x": 560,
+       "y": 1250,
+       "h": 520,
        "ry": 0,
        "rect": [
         192,
@@ -200,9 +445,9 @@
        "crop": "../demo-case/el-cottage-shanhai-crop.webp",
        "ref": "../demo-case/el-cottage-shanhai-ref.webp",
        "model": "assets/models/demo_cottage_shanhai.glb",
-       "x": 693,
-       "y": 1248,
-       "h": 659,
+       "x": 600,
+       "y": 1230,
+       "h": 500,
        "ry": -1.5708,
        "rect": [
         169,
@@ -215,9 +460,9 @@
        "crop": "../demo-case/el-cottage-pixel-crop.webp",
        "ref": "../demo-case/el-cottage-pixel-ref.webp",
        "model": "assets/models/demo_cottage_pixel.glb",
-       "x": 587,
-       "y": 1248,
-       "h": 659,
+       "x": 560,
+       "y": 1240,
+       "h": 470,
        "ry": -1.5708,
        "rect": [
         123,
@@ -230,9 +475,9 @@
        "crop": "../demo-case/el-cottage-chibi-crop.webp",
        "ref": "../demo-case/el-cottage-chibi-ref.webp",
        "model": "assets/models/demo_cottage_chibi.glb",
-       "x": 564,
-       "y": 1225,
-       "h": 502,
+       "x": 560,
+       "y": 1200,
+       "h": 420,
        "ry": 0,
        "rect": [
         120,
@@ -270,7 +515,8 @@
      "fit": "cover",
      "x": 0,
      "y": 0,
-     "depth": -0.8
+     "depth": -0.8,
+     "feather": 0.05
     },
     {
      "id": "bench",
@@ -282,7 +528,92 @@
      "depth": 0.5,
      "anim": "breathe",
      "ry": -1.5708,
-     "hidden": true
+     "hidden": true,
+     "autoFace": false
+    },
+    {
+     "id": "rowboat",
+     "kind": "model",
+     "hidden": true,
+     "x": 960,
+     "y": 1330,
+     "h": 110,
+     "depth": -0.6,
+     "anim": "drift",
+     "ry": 0,
+     "variants": {
+      "mucha": {
+       "src": "assets/models/demo_rowboat_mucha.glb",
+       "x": 900,
+       "y": 1430
+      },
+      "shanhai": {
+       "src": "assets/models/demo_rowboat_shanhai.glb",
+       "x": 960,
+       "y": 1290,
+       "h": 80
+      },
+      "pixel": {
+       "src": "assets/models/demo_rowboat_pixel.glb",
+       "x": 380,
+       "y": 1440,
+       "h": 55
+      },
+      "chibi": {
+       "src": "assets/models/demo_rowboat_chibi.glb",
+       "x": 930,
+       "y": 1420
+      }
+     }
+    },
+    {
+     "id": "birds",
+     "kind": "card",
+     "hidden": true,
+     "x": 120,
+     "y": 300,
+     "w": 280,
+     "depth": 0.3,
+     "anim": "flap",
+     "variants": {
+      "mucha": {
+       "src": "../demo-case/gulls-mucha.webp"
+      },
+      "shanhai": {
+       "src": "../demo-case/gulls-shanhai.webp"
+      },
+      "pixel": {
+       "src": "../demo-case/gulls-pixel.webp"
+      },
+      "chibi": {
+       "src": "../demo-case/gulls-chibi.webp"
+      }
+     }
+    },
+    {
+     "id": "fg",
+     "kind": "card",
+     "hidden": true,
+     "x": 640,
+     "y": -30,
+     "w": 620,
+     "depth": 2.0,
+     "variants": {
+      "mucha": {
+       "src": "../demo-case/fg-branch-mucha.webp"
+      },
+      "shanhai": {
+       "src": "../demo-case/fg-branch-shanhai.webp"
+      },
+      "pixel": {
+       "src": "../demo-case/fg-branch-pixel.webp"
+      },
+      "chibi": {
+       "src": "../demo-case/fg-branch-chibi.webp"
+      }
+     },
+     "anim": "sway",
+     "pivot": "top"
     }
    ],
    "elements": [
@@ -317,9 +648,9 @@
        "crop": "../demo-case/el-bench-shanhai-crop.webp",
        "ref": "../demo-case/el-bench-shanhai-ref.webp",
        "model": "assets/models/demo_bench_shanhai.glb",
-       "x": 454,
+       "x": 440,
        "y": 1843,
-       "h": 486,
+       "h": 420,
        "ry": -1.5708,
        "rect": [
         130,
@@ -332,9 +663,9 @@
        "crop": "../demo-case/el-bench-pixel-crop.webp",
        "ref": "../demo-case/el-bench-pixel-ref.webp",
        "model": "assets/models/demo_bench_pixel.glb",
-       "x": 768,
+       "x": 600,
        "y": 1772,
-       "h": 595,
+       "h": 480,
        "ry": -1.5708,
        "rect": [
         336,

@@ -563,10 +563,18 @@ async function demoPaint(list) {
 // 案例里每个元素按风格各有一套：参考图、模型、在画里的位置（world.json 的 elements[].demo[风格]）
 const demoOf = (el, style = state.world.style) => el.demo?.[style] ?? el.demo?.mucha;
 function applyDemoElements(st, style) {
+  // 加层：帆船、海鸥、散步的我们、前景花草……每层按风格各有一套
+  for (const L of st.layers) if (L.variants) {
+    // 先回到模板值再套风格，切换风格时不残留上一个风格的位置；off = 这个风格不放这一层
+    L.base ??= Object.fromEntries(Object.entries(L).filter(([k]) => k !== 'variants'));
+    for (const k of Object.keys(L)) if (k !== 'variants' && k !== 'base') delete L[k];
+    Object.assign(L, L.base, L.variants[style] ?? L.variants.mucha);
+    if (L.off) L.hidden = true; else delete L.hidden;
+  }
   for (const el of st.elements ?? []) {
     const d = demoOf(el, style); if (!d) continue;
     const L = st.layers.find((x) => x.id === el.id); if (!L) continue;
-    Object.assign(L, { src: d.model, x: d.x, y: d.y, h: d.h, ry: d.ry ?? 0 }); delete L.hidden;
+    Object.assign(L, { src: d.model, x: d.x, y: d.y, h: d.h, ry: d.ry ?? 0, autoFace: false }); delete L.hidden;
     el.rect = d.rect;
   }
 }
